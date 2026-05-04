@@ -1,0 +1,92 @@
+name: "EvalDesk Agent Evaluation"
+description: "Run AI agent evaluations and check pass rate on pull requests"
+author: "EvalDesk"
+branding:
+  icon: "check-circle"
+  color: "green"
+
+inputs:
+  evaldesk-url:
+    description: "Your EvalDesk instance URL (e.g. https://evaldesk.yourcompany.com)"
+    required: true
+  api-key:
+    description: "EvalDesk API key (from project settings)"
+    required: true
+  project-id:
+    description: "Project ID to evaluate"
+    required: true
+  run-name:
+    description: "Label for this evaluation run"
+    required: false
+    default: "CI: PR evaluation"
+  fail-threshold:
+    description: "Fail the step if pass rate is below this percentage (0-100)"
+    required: false
+    default: "80"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run EvalDesk evaluation
+      shell: bash
+      env:
+        EVALDESK_URL: ${{ inputs.evaldesk-url }}
+        EVALDESK_KEY: ${{ inputs.api-key }}
+        PROJECT_ID: ${{ inputs.project-id }}
+        RUN_NAME: ${{ inputs.run-name }}
+        FAIL_THRESHOLD: ${{ inputs.fail-threshold }}
+      run: |
+        echo "::group::EvalDesk — Running evaluation"
+        echo "Project: $PROJECT_ID"
+        echo "Run name: $RUN_NAME"
+
+        # Trigger the evaluation run
+        RESPONSE=$(curl -s -X POST "${EVALDESK_URL}/api/ci/run" \
+          -H "Content-Type: application/json" \
+          -H "X-EvalDesk-Key: ${EVALDESK_KEY}" \
+          -d "{\"projectId\":\"${PROJECT_ID}\",\"runName\":\"${RUN_NAME}\"}")
+
+        # Check for errors
+        ERROR=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('error',''))" 2>/dev/null || echo "")
+        if [ -n "$ERROR" ]; then
+          echo "::error::EvalDesk run failed: $ERROR"
+          exit 1
+        fi
+
+        # Extract results
+        TOTAL=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('totalCases',0))" 2>/dev/null || echo "0")
+        PASS=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('passCount',0))" 2>/dev/null || echo "0")
+        FAIL=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('failCount',0))" 2>/dev/null || echo "0")
+        PARTIAL=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('partialCount',0))" 2>/dev/null || echo "0")
+        PASS_RATE=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('passRate','N/A'))" 2>/dev/null || echo "N/A")
+        RUN_ID=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null || echo "")
+
+        echo ""
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "  EvalDesk Results"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "  Pass Rate:  ${PASS_RATE}%"
+        echo "  Total:      ${TOTAL}"
+        echo "  Pass:       ${PASS}"
+        echo "  Fail:       ${FAIL}"
+        echo "  Partial:    ${PARTIAL}"
+        if [ -n "$RUN_ID" ]; then
+          echo "  View:       ${EVALDESK_URL}/projects/${PROJECT_ID}/runs"
+        fi
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+        # Set output for downstream steps
+        echo "pass_rate=${PASS_RATE}" >> $GITHUB_OUTPUT
+        echo "total_cases=${TOTAL}" >> $GITHUB_OUTPUT
+        echo "pass_count=${PASS}" >> $GITHUB_OUTPUT
+        echo "fail_count=${FAIL}" >> $GITHUB_OUTPUT
+
+        # Check threshold
+        if [ "$PASS_RATE" != "N/A" ] && [ "$PASS_RATE" -lt "$FAIL_THRESHOLD" ]; then
+          echo "::warning::Pass rate ${PASS_RATE}% is below threshold ${FAIL_THRESHOLD}%"
+          echo "::error::Evaluation failed: pass rate ${PASS_RATE}% < ${FAIL_THRESHOLD}% threshold"
+          exit 1
+        fi
+
+        echo "::endgroup::"
+        echo "✅ EvalDesk evaluation passed: ${PASS_RATE}%"

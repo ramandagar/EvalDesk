@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  evaldesk:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - evaldesk-data:/app/data
+    environment:
+      - NEXTAUTH_SECRET=change-me-in-production
+      - DATABASE_URL=/app/data/evaldesk.db
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    restart: unless-stopped
+
+volumes:
+  evaldesk-data:

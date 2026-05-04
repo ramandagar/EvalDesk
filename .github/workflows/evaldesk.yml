@@ -1,0 +1,37 @@
+name: EvalDesk Agent Evaluation
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    name: Run agent evaluation
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: EvalDesk Evaluation
+        uses: ./action
+        id: eval
+        with:
+          evaldesk-url: ${{ secrets.EVALDESK_URL }}
+          api-key: ${{ secrets.EVALDESK_API_KEY }}
+          project-id: ${{ secrets.EVALDESK_PROJECT_ID }}
+          run-name: "CI: PR #${{ github.event.number }}"
+          fail-threshold: "80"
+
+      - name: Comment PR with results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🤖 EvalDesk Agent Evaluation\n\n` +
+                `**Pass Rate:** ${{ steps.eval.outputs.pass_rate || 'N/A' }}%\n` +
+                `**Results:** ${{ steps.eval.outputs.pass_count || 0 }} pass / ${{ steps.eval.outputs.fail_count || 0 }} fail / ${{ steps.eval.outputs.total_cases || 0 }} total\n` +
+                `${{ steps.eval.outputs.pass_rate && steps.eval.outputs.pass_rate >= 80 ? '✅ Passed threshold' : '❌ Below threshold' }}`
+            })

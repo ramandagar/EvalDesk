@@ -1,0 +1,132 @@
+
+<style>
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.section{margin-bottom:28px}
+.label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);letter-spacing:.06em;text-transform:uppercase;margin:0 0 10px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px 14px;background:var(--color-background-primary)}
+.card-title{font-size:13px;font-weight:500;margin:0 0 3px;color:var(--color-text-primary)}
+.card-sub{font-size:12px;color:var(--color-text-secondary);line-height:1.45;margin:0}
+.tag{display:inline-block;font-size:10px;font-weight:500;padding:2px 8px;border-radius:99px;margin-top:6px}
+.red{background:#FCEBEB;color:#A32D2D}
+.green{background:#EAF3DE;color:#3B6D11}
+.blue{background:#E6F1FB;color:#0C447C}
+.amber{background:#FAEEDA;color:#854F0B}
+.divider{height:0.5px;background:var(--color-border-tertiary);margin:20px 0}
+.step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--color-text-primary);flex-shrink:0;margin-top:1px}
+.step-body{flex:1}
+.step-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin:0 0 3px}
+.step-desc{font-size:12px;color:var(--color-text-secondary);line-height:1.5;margin:0}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.feat{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px}
+.feat-title{font-size:12px;font-weight:500;color:var(--color-text-primary);margin:0 0 3px}
+.feat-desc{font-size:11px;color:var(--color-text-secondary);line-height:1.4;margin:0}
+.cta{border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:12px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.cta:hover{background:var(--color-background-secondary)}
+.cta-text{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.cta-arrow{font-size:14px;color:var(--color-text-tertiary)}
+</style>
+
+<h2 class="sr-only">Agent eval tool build plan — what exists, the gap, what to build</h2>
+
+<div style="padding:16px 0 0">
+
+<div class="section">
+  <div class="label">What exists today — the honest truth</div>
+  <div class="row">
+    <div class="card">
+      <p class="card-title">DeepEval, MLflow, Langfuse</p>
+      <p class="card-sub">Open source, powerful, well-maintained — but 100% engineer-only. You write Python/JSON test cases. No UI for domain experts.</p>
+      <span class="tag red">code required</span>
+    </div>
+    <div class="card">
+      <p class="card-title">Confident AI, Maxim AI</p>
+      <p class="card-sub">No-code UI, domain experts CAN use them — but closed source, $500–$1000+/month. Not an option for startups or self-hosting.</p>
+      <span class="tag red">paid + closed</span>
+    </div>
+  </div>
+  <div class="card" style="border-left:2px solid #378ADD;border-radius:0">
+    <p class="card-title" style="color:#0C447C">The exact gap</p>
+    <p class="card-sub" style="color:#185FA5">Open source + self-hostable + no-code UI for domain experts. This combination does not exist. DeepEval is the closest but explicitly has "no UI, no collaboration, no production monitoring."</p>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="section">
+  <div class="label">What you build — EvalDesk (working name)</div>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 14px;line-height:1.6">A simple, self-hostable web app. A doctor, lawyer, teacher, or compliance officer opens the browser, types test questions, rates the AI answers, and sees a quality score over time. Zero code required from them.</p>
+  <div class="feature-grid">
+    <div class="feat"><p class="feat-title">Test case editor</p><p class="feat-desc">Write Q&A pairs in plain English, no JSON, no code</p></div>
+    <div class="feat"><p class="feat-title">One-click run</p><p class="feat-desc">Hit any agent via URL — paste endpoint, add API key, done</p></div>
+    <div class="feat"><p class="feat-title">Human rating UI</p><p class="feat-desc">Good / Bad / Partial with comment. Fast keyboard shortcuts</p></div>
+    <div class="feat"><p class="feat-title">Quality dashboard</p><p class="feat-desc">Pass rate over time, worst-performing questions, regressions</p></div>
+    <div class="feat"><p class="feat-title">Auto judge</p><p class="feat-desc">Optional LLM-as-judge to score answers automatically, no human needed</p></div>
+    <div class="feat"><p class="feat-title">Team sharing</p><p class="feat-desc">Invite a doctor, lawyer, PM by email — no GitHub account needed</p></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="section">
+  <div class="label">How to build it — step by step</div>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <p class="step-title">Week 1–2: core backend</p>
+      <p class="step-desc">Next.js + TypeScript. SQLite for local, Postgres for cloud. Three tables: projects, test_cases, runs. One API route: POST /run — takes endpoint URL + test cases, fires requests, stores responses.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <p class="step-title">Week 3: rating UI</p>
+      <p class="step-desc">Show question + agent answer side by side. Three buttons: Pass / Fail / Partial. Comment field. Keyboard: 1/2/3 to rate fast. This is the core value — domain experts can fly through 50 test cases in 10 minutes.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <p class="step-title">Week 4: dashboard + Docker</p>
+      <p class="step-desc">Pass rate chart over time. Worst-performing test cases sorted by fail rate. Regression alerts when a new run scores lower than the last. Package everything as a single docker-compose.yml — one command to self-host.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <p class="step-title">Week 5: launch</p>
+      <p class="step-desc">Write a great README with a 30-second GIF of a non-engineer rating AI answers. Post on Hacker News "Show HN". Share in r/MachineLearning, r/LocalLLaMA, and 3 Discord servers (LangChain, Mastra, AI Engineer). Write one blog post: "Why your AI agent needs a doctor to test it, not a developer."</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="section">
+  <div class="label">Tech stack — keep it simple</div>
+  <div class="row">
+    <div class="card"><p class="card-title">Frontend</p><p class="card-sub">Next.js, Tailwind, shadcn/ui — fast to build, looks professional</p><span class="tag blue">TypeScript</span></div>
+    <div class="card"><p class="card-title">Backend</p><p class="card-sub">Next.js API routes, Drizzle ORM, SQLite (dev) + Postgres (prod)</p><span class="tag blue">Node.js</span></div>
+    <div class="card"><p class="card-title">Auth</p><p class="card-sub">NextAuth — email magic link, no password needed for inviting domain experts</p><span class="tag green">simple</span></div>
+    <div class="card"><p class="card-title">Deploy</p><p class="card-sub">docker-compose.yml for self-hosting. Vercel for cloud demo. One command for both.</p><span class="tag green">easy</span></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="section">
+  <div class="label">Path to job or business</div>
+  <div class="row">
+    <div class="card"><p class="card-title">Job path (3–4 months)</p><p class="card-sub">500+ GitHub stars = credibility. Apply to AI startups directly saying "I built this open source eval tool used by X teams." Toptal, Arc.dev, direct GitHub outreach. Target $30–50k remote.</p><span class="tag amber">realistic</span></div>
+    <div class="card"><p class="card-title">Business path (6–12 months)</p><p class="card-sub">Open core model. Self-host free forever. Cloud hosted version with SSO, advanced analytics, team management = $49/month. Healthcare, legal, education are natural buyers.</p><span class="tag amber">longer</span></div>
+  </div>
+</div>
+
+<div class="cta" onclick="sendPrompt('Give me the exact file structure and starter code to build EvalDesk — the agent testing tool for non-engineers')">
+  <span class="cta-text">Build it now — get the exact starter code</span>
+  <span class="cta-arrow">↗</span>
+</div>
+
+</div>
