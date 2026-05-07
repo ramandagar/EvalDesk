@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const publicPaths = ["/", "/login", "/api/auth/login", "/api/auth/logout", "/api/auth/me"];
-const publicPathPrefixes = ["/certificate/", "/api/certificates"];
+const publicPaths = ["/", "/login", "/api/auth/login", "/api/auth/logout", "/api/auth/me", "/api/seed"];
+const publicPathPrefixes = ["/certificate/", "/api/certificates", "/embed/", "/api/embed/"];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
