@@ -6,7 +6,7 @@ import { useState } from "react";
 import {
   LayoutDashboard, FolderKanban, PanelLeftClose, PanelLeft,
   Moon, Sun, RotateCcw, Play, GitCompare, BarChart3,
-  Settings, FileText
+  Settings, FileText, DollarSign, Cpu
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
@@ -20,6 +20,8 @@ const mainNav = [
 
 const secondaryNav = [
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/executive", label: "Executive", icon: DollarSign },
+  { href: "/models", label: "Models", icon: Cpu },
   { href: "/test-cases", label: "Test Cases", icon: FileText },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

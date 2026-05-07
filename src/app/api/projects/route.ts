@@ -5,8 +5,8 @@ import { eq, desc, sql } from "drizzle-orm";
 import { requireAuth } from "@/lib/api-utils";
 
 export async function GET() {
-  const { error, user } = await requireAuth(new NextRequest("http://localhost"));
-  if (error || !user) {
+  const user = await requireAuth(new NextRequest("http://localhost"));
+  if (!user) {
     // For demo/unseeded: return empty instead of error so dashboard doesn't crash
     try {
       const allProjects = await db.select().from(projects).orderBy(desc(projects.createdAt)).limit(50);
@@ -35,15 +35,15 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireAuth(req);
-  if (error || !user) return error || NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const user = await requireAuth(req);
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const body = await req.json();
     const { name, description, endpoint, apiKey, agentType, agentConfig } = body;
     if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
 
-    const [project] = await db.insert(projects).values({
+    const projRows = await db.insert(projects).values({
       name,
       description: description || null,
       agentEndpoint: endpoint || null,
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
     }).returning();
 
-    return NextResponse.json(project);
+    return NextResponse.json((projRows as any[])[0]);
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "Failed to create project" }, { status: 500 });
   }

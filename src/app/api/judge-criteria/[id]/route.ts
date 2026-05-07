@@ -19,12 +19,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.model) updates.model = body.model;
     updates.updatedAt = new Date();
 
-    const [updated] = await db
+    const rows = await db
       .update(judgeCriteria)
       .set(updates)
       .where(eq(judgeCriteria.id, id))
       .returning();
 
+    const updated = (rows as any[])[0];
     if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(updated);
   } catch (error: any) {

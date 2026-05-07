@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "projectId, name, and criteria required" }, { status: 400 });
     }
 
-    const [created] = await db
+    const rows = await db
       .insert(judgeCriteria)
       .values({
         projectId,
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
-    return NextResponse.json(created);
+    return NextResponse.json((rows as any[])[0]);
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Failed to create" }, { status: 500 });
   }

@@ -6,7 +6,7 @@ import { updateRunStats } from "@/lib/agent-runner";
 import { requireAuth } from "@/lib/api-utils";
 
 export async function POST(req: NextRequest) {
-  const { user } = await requireAuth(req);
+  const user = await requireAuth(req);
   const userId = user?.id || null;
   try {
     const body = await req.json();

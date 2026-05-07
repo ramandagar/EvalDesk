@@ -6,8 +6,8 @@ import { executeRun } from "@/lib/agent-runner";
 import { requireAuth } from "@/lib/api-utils";
 
 export async function POST(req: NextRequest) {
-  const { error, user } = await requireAuth(req);
-  if (error || !user) return error || NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const user = await requireAuth(req);
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
     const body = await req.json();

@@ -7,10 +7,10 @@ import { createId } from "@/lib/utils";
 export async function POST(req: NextRequest) {
   try {
     let userId: string;
-    const { user } = await (await import("@/lib/api-utils")).requireAuth(req);
+    const authUser = await (await import("@/lib/api-utils")).requireAuth(req);
 
-    if (user) {
-      userId = user.id;
+    if (authUser) {
+      userId = authUser.id;
     } else {
       const existing = await db.select().from(users).limit(1);
       if (existing.length > 0) {

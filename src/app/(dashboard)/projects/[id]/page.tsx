@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DashboardHeader } from "@/components/dashboard/Header";
 import Link from "next/link";
-import { FileText, Play, BarChart3, ArrowRight, Loader2, ArrowLeftRight, Settings, AlertTriangle, TrendingDown, FlaskConical } from "lucide-react";
+import { FileText, Play, BarChart3, ArrowRight, Loader2, ArrowLeftRight, Settings, AlertTriangle, TrendingDown, FlaskConical, Link as LinkIcon, Users, FileBarChart, FlaskConical as Beaker } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ProjectDetailPage() {
@@ -50,7 +50,7 @@ export default function ProjectDetailPage() {
       <DashboardHeader title={project.name} subtitle={project.description || undefined} />
       <div className="p-5 space-y-5">
         {/* Navigation cards */}
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { href: `/projects/${project.id}/compare`, icon: ArrowLeftRight, color: "#6D75A6", label: "Compare", desc: "Side-by-side runs" },
             { href: `/projects/${project.id}/test-cases`, icon: FileText, color: "#ABC83A", label: "Test Cases", desc: `${project.testCaseCount || 0} cases` },
@@ -72,6 +72,21 @@ export default function ProjectDetailPage() {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#4E9363]/10 dark:bg-[#4E9363]/15 shrink-0"><BarChart3 className="h-4 w-4 text-[#4E9363]" /></div>
             <div><p className="text-[13px] font-medium text-[#0a0a0a] dark:text-[#f7f8f8]" style={{ letterSpacing: "-0.01em" }}>Pass Rate</p><p className="text-[12px] text-[#8a8f98] dark:text-[#62666d]">{project.lastPassRate !== null ? `${project.lastPassRate}%` : "No data"}</p></div>
           </div>
+          <Link href={`/projects/${project.id}/integrations`} className="card p-4 flex items-center gap-3 group card-hover">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-500/10 shrink-0"><LinkIcon className="h-4 w-4 text-purple-500" /></div>
+            <div className="flex-1 min-w-0"><p className="text-[13px] font-medium text-[#0a0a0a] dark:text-[#f7f8f8]" style={{ letterSpacing: "-0.01em" }}>Integrations</p><p className="text-[12px] text-[#8a8f98] dark:text-[#62666d]">Webhooks, Slack, schedules</p></div>
+            <ArrowRight className="h-4 w-4 text-[#8a8f98] dark:text-[#62666d] group-hover:text-[#0a0a0a] dark:group-hover:text-[#f7f8f8] transition" />
+          </Link>
+          <Link href={`/projects/${project.id}/collaboration`} className="card p-4 flex items-center gap-3 group card-hover">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10 shrink-0"><Users className="h-4 w-4 text-blue-500" /></div>
+            <div className="flex-1 min-w-0"><p className="text-[13px] font-medium text-[#0a0a0a] dark:text-[#f7f8f8]" style={{ letterSpacing: "-0.01em" }}>Team</p><p className="text-[12px] text-[#8a8f98] dark:text-[#62666d]">Roles, comments, API keys</p></div>
+            <ArrowRight className="h-4 w-4 text-[#8a8f98] dark:text-[#62666d] group-hover:text-[#0a0a0a] dark:group-hover:text-[#f7f8f8] transition" />
+          </Link>
+          <Link href={`/projects/${project.id}/reports`} className="card p-4 flex items-center gap-3 group card-hover">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500/10 shrink-0"><FileBarChart className="h-4 w-4 text-orange-500" /></div>
+            <div className="flex-1 min-w-0"><p className="text-[13px] font-medium text-[#0a0a0a] dark:text-[#f7f8f8]" style={{ letterSpacing: "-0.01em" }}>Reports</p><p className="text-[12px] text-[#8a8f98] dark:text-[#62666d]">PDF, embed, diff</p></div>
+            <ArrowRight className="h-4 w-4 text-[#8a8f98] dark:text-[#62666d] group-hover:text-[#0a0a0a] dark:group-hover:text-[#f7f8f8] transition" />
+          </Link>
           <Link href={`/projects/${project.id}/settings`} className="card p-4 flex items-center gap-3 group card-hover">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-black/[0.04] dark:bg-white/[0.04] shrink-0"><Settings className="h-4 w-4 text-[#8a8f98]" /></div>
             <div className="flex-1 min-w-0"><p className="text-[13px] font-medium text-[#0a0a0a] dark:text-[#f7f8f8]" style={{ letterSpacing: "-0.01em" }}>Settings</p><p className="text-[12px] text-[#8a8f98] dark:text-[#62666d]">Agent config, endpoint</p></div>
