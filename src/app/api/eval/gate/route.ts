@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Run not found" }, { status: 404 });
     }
 
-    const threshold = run.passThreshold ?? 80;
+    const threshold = Number(request.nextUrl.searchParams.get("threshold")) || run.passThreshold || 80;
     const result = checkGate({
       passRate: run.passRate,
       threshold,

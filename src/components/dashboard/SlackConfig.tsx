@@ -21,7 +21,7 @@ export function SlackConfig({ projectId }: Props) {
       const res = await fetch("/api/integrations/slack", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId, webhookUrl, channel, events }),
+        body: JSON.stringify({ action: "configure", projectId, webhookUrl, channel, notifyOn: events }),
       });
       if (res.ok) toast.success("Slack config saved");
       else { const err = await res.json(); toast.error(err.error || "Failed"); }

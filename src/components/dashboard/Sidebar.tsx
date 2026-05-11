@@ -6,7 +6,7 @@ import { useState } from "react";
 import {
   LayoutDashboard, FolderKanban, PanelLeftClose, PanelLeft,
   Moon, Sun, RotateCcw, Play, GitCompare, BarChart3,
-  Settings, FileText, DollarSign, Cpu
+  Settings, FileText, DollarSign, Cpu, CreditCard
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ const secondaryNav = [
   { href: "/executive", label: "Executive", icon: DollarSign },
   { href: "/models", label: "Models", icon: Cpu },
   { href: "/test-cases", label: "Test Cases", icon: FileText },
+  { href: "/billing", label: "Billing", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

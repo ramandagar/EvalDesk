@@ -10,10 +10,16 @@ interface CoverageItem {
   coveragePercent: number;
 }
 
+interface CoverageSummary {
+  totalCases: number;
+  evaluatedCases: number;
+  coveragePercent: number;
+}
+
 interface CoverageData {
   categories: CoverageItem[];
   tags: CoverageItem[];
-  summary: CoverageItem;
+  summary: CoverageSummary;
 }
 
 interface Props {

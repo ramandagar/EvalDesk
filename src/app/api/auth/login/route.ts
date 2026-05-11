@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { signup, login } from "@/lib/auth";
 import { cookies } from "next/headers";
+import { db } from "@/db";
+import { onboardingState } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,7 +36,14 @@ export async function POST(req: NextRequest) {
       path: "/",
     });
 
-    return NextResponse.json({ user: { id: user.id, name: user.name, email: user.email }, isFirstUser: action === "signup" });
+    // Check onboarding state
+    let needsOnboarding = false;
+    try {
+      const [state] = await db.select().from(onboardingState).where(eq(onboardingState.userId, user.id)).limit(1);
+      needsOnboarding = !state || !state.isComplete;
+    } catch {}
+
+    return NextResponse.json({ user: { id: user.id, name: user.name, email: user.email }, isFirstUser: action === "signup", needsOnboarding });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

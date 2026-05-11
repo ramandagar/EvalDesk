@@ -35,7 +35,11 @@ export default function LoginPage() {
         if (data.isFirstUser) {
           await fetch("/api/seed", { method: "POST" });
         }
-        router.push("/dashboard");
+        if (data.needsOnboarding) {
+          router.push("/onboarding");
+        } else {
+          router.push("/dashboard");
+        }
       } else {
         setError(data.error || "Failed to sign in");
       }

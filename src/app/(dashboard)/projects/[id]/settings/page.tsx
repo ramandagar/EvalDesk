@@ -19,6 +19,7 @@ export default function ProjectSettingsPage() {
     agentType: "custom",
     endpoint: "",
     apiKey: "",
+    model: "",
   });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [judges, setJudges] = useState<any[]>([]);
@@ -43,12 +44,14 @@ export default function ProjectSettingsPage() {
       if (res.ok) {
         const p = await res.json();
         setProject(p);
-        // Parse agentHeaders to get agent type
+        // Parse agentHeaders to get agent type and model
         let agentType = "custom";
+        let model = "";
         if (p.agentHeaders) {
           try {
             const config = JSON.parse(p.agentHeaders);
             if (config.type) agentType = config.type;
+            if (config.model) model = config.model;
           } catch {}
         }
         setForm({
@@ -57,6 +60,7 @@ export default function ProjectSettingsPage() {
           agentType,
           endpoint: p.agentEndpoint || "",
           apiKey: p.agentApiKey || "",
+          model,
         });
       }
     } catch {}
@@ -79,7 +83,7 @@ export default function ProjectSettingsPage() {
           description: form.description || null,
           agentEndpoint: form.endpoint || null,
           agentApiKey: form.apiKey || null,
-          agentHeaders: JSON.stringify({ type: form.agentType }),
+          agentHeaders: JSON.stringify({ type: form.agentType, model: form.model || undefined }),
         }),
       });
       if (res.ok) {
@@ -241,13 +245,25 @@ export default function ProjectSettingsPage() {
               <label className="block text-[12px] text-[#8a8f98] dark:text-[#62666d] mb-1" style={{ letterSpacing: "-0.01em" }}>Agent type</label>
               <select
                 value={form.agentType}
-                onChange={(e) => setForm({ ...form, agentType: e.target.value })}
+                onChange={(e) => {
+                  const type = e.target.value;
+                  const defaults: Record<string, { endpoint: string; model: string }> = {
+                    openai: { endpoint: "https://api.openai.com/v1/chat/completions", model: "gpt-4o-mini" },
+                    openrouter: { endpoint: "https://openrouter.ai/api/v1/chat/completions", model: "openai/gpt-4o-mini" },
+                    deepseek: { endpoint: "https://api.deepseek.com/v1/chat/completions", model: "deepseek-chat" },
+                    langchain: { endpoint: "", model: "" },
+                    custom: { endpoint: "", model: "" },
+                  };
+                  const d = defaults[type] || defaults.custom;
+                  setForm({ ...form, agentType: type, endpoint: form.endpoint || d.endpoint, model: form.model || d.model });
+                }}
                 className="input"
               >
-                <option value="custom">Custom API (any endpoint)</option>
                 <option value="openai">OpenAI (GPT-4, GPT-4o)</option>
+                <option value="deepseek">DeepSeek</option>
                 <option value="openrouter">OpenRouter (multi-model)</option>
                 <option value="langchain">LangChain / LangGraph Serve</option>
+                <option value="custom">Custom API (any endpoint)</option>
               </select>
             </div>
             <div>
@@ -261,9 +277,28 @@ export default function ProjectSettingsPage() {
                 placeholder={
                   form.agentType === "openai"
                     ? "sk-..."
+                    : form.agentType === "deepseek"
+                      ? "sk-..."
                     : form.agentType === "openrouter"
                       ? "sk-or-..."
                       : "API key"
+                }
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="block text-[12px] text-[#8a8f98] dark:text-[#62666d] mb-1" style={{ letterSpacing: "-0.01em" }}>Model</label>
+              <input
+                value={form.model}
+                onChange={(e) => setForm({ ...form, model: e.target.value })}
+                placeholder={
+                  form.agentType === "openai"
+                    ? "gpt-4o-mini"
+                    : form.agentType === "deepseek"
+                      ? "deepseek-chat"
+                      : form.agentType === "openrouter"
+                        ? "openai/gpt-4o-mini"
+                        : "model name"
                 }
                 className="input"
               />

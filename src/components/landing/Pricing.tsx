@@ -56,7 +56,7 @@ export function Pricing() {
   ];
 
   return (
-    <section className="py-20 px-5">
+    <section id="pricing" className="py-20 px-5">
       <div className="mx-auto max-w-5xl">
         <div className="text-center mb-12">
           <span className="section-label">Pricing</span>

@@ -9,14 +9,14 @@ interface ApprovalHistory {
   action: string;
   userId: string;
   details: { comment?: string; approvalStatus: string; previousStatus: string } | null;
-  createdAt: number;
+  createdAt: string;
 }
 
 interface ApprovalData {
   runId: string;
   approvalStatus: ApprovalStatus;
   approvedBy: string | null;
-  approvedAt: number | null;
+  approvedAt: string | null;
   history: ApprovalHistory[];
 }
 
@@ -197,7 +197,7 @@ export function ApprovalWorkflow({ runId, onAction }: Props) {
                   )}
                   <p className="text-[10px] text-[#8a8f98] dark:text-[#62666d] mt-0.5">
                     {entry.createdAt
-                      ? new Date(entry.createdAt * 1000).toLocaleDateString("en-US", {
+                      ? new Date(entry.createdAt).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                           hour: "2-digit",

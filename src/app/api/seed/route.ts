@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { users, projects, testCases, runs, runResults } from "@/db/schema";
+import { users, projects, testCases, runs, runResults, blogPosts, plans } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { createId } from "@/lib/utils";
 
@@ -19,6 +19,53 @@ export async function POST(req: NextRequest) {
         userId = createId();
         await db.insert(users).values({ id: userId, name: "Demo User", email: "demo@evaldesk.dev", emailVerified: new Date() });
       }
+    }
+
+    // Seed default plans (always, idempotent)
+    const existingPlans = await db.select().from(plans);
+    if (existingPlans.length === 0) {
+      await db.insert(plans).values([
+        { id: "plan-free", name: "Free", price: 0, interval: "month", features: JSON.stringify(["5 projects", "100 test cases", "Basic analytics", "Community support"]), limits: JSON.stringify({ projects: 5, testCases: 100, teamMembers: 1 }) },
+        { id: "plan-pro", name: "Pro", price: 29, interval: "month", features: JSON.stringify(["Unlimited projects", "Unlimited test cases", "Advanced analytics", "LLM-as-Judge", "Team collaboration", "Priority support"]), limits: JSON.stringify({ projects: -1, testCases: -1, teamMembers: 10 }), stripePriceId: "price_pro_monthly" },
+        { id: "plan-enterprise", name: "Enterprise", price: 99, interval: "month", features: JSON.stringify(["Everything in Pro", "Custom integrations", "SSO/SAML", "Audit logs", "SLA guarantee", "Dedicated support"]), limits: JSON.stringify({ projects: -1, testCases: -1, teamMembers: -1 }), stripePriceId: "price_enterprise_monthly" },
+      ]);
+    }
+
+    // Seed blog posts (always, idempotent)
+    const existingPosts = await db.select().from(blogPosts);
+    if (existingPosts.length === 0) {
+      await db.insert(blogPosts).values([
+        {
+          title: "Why Domain Experts Should Evaluate AI, Not Engineers",
+          slug: "domain-experts-evaluate-ai",
+          excerpt: "The best AI evaluators aren't developers — they're the doctors, lawyers, and teachers who understand what correct actually means.",
+          content: `<h2>The Evaluation Gap</h2>\n<p>Most AI evaluation tools are built by engineers, for engineers. They focus on latency, token counts, and automated metrics. But the most important question — "Is this response actually correct?" — requires domain expertise that no benchmark can capture.</p>\n<h2>Domain Experts as Evaluators</h2>\n<p>A doctor can spot a medically dangerous response that passes all automated checks. A lawyer knows when a contract summary misses a critical clause. A teacher recognizes when an explanation would confuse a student.</p>\n<p>EvalDesk is built around this insight. Our human-in-the-loop rating system lets domain experts evaluate AI responses using plain language — no coding required.</p>\n<h2>Getting Started</h2>\n<p>Create a project, add test cases in plain English, run your AI agent, and have domain experts rate each response as pass, partial, or fail. It's that simple.</p>`,
+          author: "EvalDesk Team",
+          publishedAt: new Date("2025-12-01"),
+          tags: JSON.stringify(["evaluation", "domain-experts", "best-practices"]),
+          isPublished: true,
+        },
+        {
+          title: "Getting Started with LLM-as-Judge in EvalDesk",
+          slug: "getting-started-llm-judge",
+          excerpt: "Use GPT-4 or DeepSeek to automatically evaluate your AI agent responses against custom criteria.",
+          content: `<h2>What is LLM-as-Judge?</h2>\n<p>LLM-as-Judge uses a language model to evaluate other model outputs. Instead of manually rating every response, you define criteria in plain English and let an LLM handle the initial scoring.</p>\n<h2>Setting Up Your Judge</h2>\n<p>In EvalDesk, go to Project Settings → Custom Judges. Create a new judge with your scoring criteria written in natural language. For example: "Score this medical response on accuracy, safety, and completeness."</p>\n<h2>How It Works</h2>\n<p>For each test case result, the judge LLM receives the input, expected output, and actual output. It scores the response 0-100 and provides reasoning. Results appear alongside human ratings in your run dashboard.</p>`,
+          author: "EvalDesk Team",
+          publishedAt: new Date("2026-01-15"),
+          tags: JSON.stringify(["llm-judge", "evaluation", "automation"]),
+          isPublished: true,
+        },
+        {
+          title: "EvalDesk v0.1: Open Source AI Agent Evaluation",
+          slug: "evaldesk-v01-launch",
+          excerpt: "We're launching EvalDesk — an open-source tool for testing AI agents without writing code.",
+          content: `<h2>Introducing EvalDesk</h2>\n<p>Today we're launching EvalDesk, an open-source evaluation tool that lets domain experts test AI agents without writing a single line of code.</p>\n<h2>Why We Built This</h2>\n<p>After working with AI teams at healthcare and legal companies, we realized the evaluation gap was the biggest blocker to deploying AI responsibly. Engineers build the models, but domain experts need to validate them — and existing tools weren't built for non-technical users.</p>\n<h2>What's Included</h2>\n<ul><li>Plain English test cases</li><li>One-click evaluation runs</li><li>Human rating with pass/partial/fail</li><li>LLM-as-Judge automated scoring</li><li>Analytics dashboard with trends</li><li>PDF reports and shareable certificates</li></ul>\n<p>Try it free — self-hosted or cloud.</p>`,
+          author: "EvalDesk Team",
+          publishedAt: new Date("2026-03-01"),
+          tags: JSON.stringify(["launch", "open-source", "announcement"]),
+          isPublished: true,
+        },
+      ]);
     }
 
     // Reset: delete all existing data if ?reset=true

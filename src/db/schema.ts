@@ -369,6 +369,75 @@ export const apiKeys = sqliteTable("api_keys", {
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 });
 
+// ============================================================
+// Billing & Marketing
+// ============================================================
+
+export const plans = sqliteTable("plans", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  name: text("name").notNull(),
+  price: real("price").notNull().default(0),
+  interval: text("interval").default("month"),
+  features: text("features"),
+  limits: text("limits"),
+  stripePriceId: text("stripe_price_id"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const subscriptions = sqliteTable("subscriptions", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  userId: text("user_id").notNull(),
+  planId: text("plan_id").notNull(),
+  status: text("status").notNull().default("active"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  currentPeriodStart: integer("current_period_start", { mode: "timestamp" }),
+  currentPeriodEnd: integer("current_period_end", { mode: "timestamp" }),
+  cancelAtPeriodEnd: integer("cancel_at_period_end", { mode: "boolean" }).default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const blogPosts = sqliteTable("blog_posts", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  content: text("content").notNull(),
+  excerpt: text("excerpt"),
+  author: text("author").notNull(),
+  coverImage: text("cover_image"),
+  publishedAt: integer("published_at", { mode: "timestamp" }),
+  tags: text("tags"),
+  isPublished: integer("is_published", { mode: "boolean" }).default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const invoices = sqliteTable("invoices", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  userId: text("user_id").notNull(),
+  subscriptionId: text("subscription_id"),
+  amount: real("amount").notNull(),
+  currency: text("currency").default("usd"),
+  status: text("status").notNull().default("draft"),
+  stripeInvoiceId: text("stripe_invoice_id"),
+  pdfUrl: text("pdf_url"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
+export const onboardingState = sqliteTable("onboarding_state", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  userId: text("user_id").notNull(),
+  currentStep: integer("current_step").notNull().default(1),
+  completedSteps: text("completed_steps"),
+  role: text("role"),
+  useCase: text("use_case"),
+  agentType: text("agent_type"),
+  isComplete: integer("is_complete", { mode: "boolean" }).default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+});
+
 // Audit log — track every action
 export const auditLog = sqliteTable("audit_log", {
   id: text("id").primaryKey().$defaultFn(() => createId()),

@@ -11,7 +11,8 @@ type AgentConfig = {
   apiKey?: string;
   method?: string;
   headers?: Record<string, string>;
-  type?: string; // "openai" | "openrouter" | "langchain" | "custom"
+  type?: string; // "openai" | "openrouter" | "langchain" | "deepseek" | "custom"
+  model?: string;
   bodyTemplate?: Record<string, any>;
 };
 
@@ -19,7 +20,12 @@ function parseAgentConfig(rawHeaders?: string | null): AgentConfig {
   if (!rawHeaders) return { endpoint: "", type: "custom" };
   try {
     const parsed = JSON.parse(rawHeaders);
-    return { type: parsed.type || "custom", bodyTemplate: parsed.bodyTemplate, headers: parsed.headers };
+    return {
+      type: parsed.type || "custom",
+      model: parsed.model || undefined,
+      bodyTemplate: parsed.bodyTemplate,
+      headers: parsed.headers,
+    };
   } catch { return { endpoint: "", type: "custom" }; }
 }
 
@@ -33,7 +39,7 @@ async function callOpenAI(input: string, config: AgentConfig): Promise<{ respons
       method: "POST",
       headers,
       body: JSON.stringify({
-        model: config.bodyTemplate?.model || "gpt-4o-mini",
+        model: config.model || config.bodyTemplate?.model || "gpt-4o-mini",
         messages: [{ role: "user", content: input }],
         max_tokens: config.bodyTemplate?.max_tokens || 500,
         temperature: config.bodyTemplate?.temperature ?? 0,
@@ -65,7 +71,7 @@ async function callOpenRouter(input: string, config: AgentConfig): Promise<{ res
       method: "POST",
       headers,
       body: JSON.stringify({
-        model: config.bodyTemplate?.model || "openai/gpt-4o-mini",
+        model: config.model || config.bodyTemplate?.model || "openai/gpt-4o-mini",
         messages: [{ role: "user", content: input }],
       }),
     });
@@ -134,6 +140,39 @@ async function callCustom(input: string, config: AgentConfig): Promise<{ respons
   }
 }
 
+async function callDeepSeek(input: string, config: AgentConfig): Promise<{ response: string | null; error?: string; time: number }> {
+  const start = Date.now();
+  try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (config.apiKey) headers["Authorization"] = `Bearer ${config.apiKey}`;
+
+    const endpoint = config.endpoint || "https://api.deepseek.com/v1/chat/completions";
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: config.model || "deepseek-chat",
+        messages: [{ role: "user", content: input }],
+        max_tokens: config.bodyTemplate?.max_tokens || 500,
+        temperature: config.bodyTemplate?.temperature ?? 0,
+      }),
+    });
+
+    const time = Date.now() - start;
+    if (!res.ok) {
+      const errText = await res.text().catch(() => res.statusText);
+      return { response: null, error: `DeepSeek HTTP ${res.status}: ${errText}`, time };
+    }
+
+    const data = await res.json();
+    const content = data.choices?.[0]?.message?.content || data.response || JSON.stringify(data);
+    return { response: typeof content === "string" ? content : JSON.stringify(content), time };
+  } catch (e: any) {
+    return { response: null, error: e.message, time: Date.now() - start };
+  }
+}
+
 // ============ ROUTER ============
 
 async function callAgent(input: string, config: AgentConfig): Promise<{ response: string | null; error?: string; time: number }> {
@@ -141,6 +180,7 @@ async function callAgent(input: string, config: AgentConfig): Promise<{ response
     case "openai": return callOpenAI(input, config);
     case "openrouter": return callOpenRouter(input, config);
     case "langchain": return callLangChain(input, config);
+    case "deepseek": return callDeepSeek(input, config);
     default: return callCustom(input, config);
   }
 }

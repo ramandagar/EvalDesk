@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
     // Process each case with streaming chunk capture
     const apiKey = project.agentApiKey || process.env.OPENAI_API_KEY;
     const agentConfig = JSON.parse(project.agentHeaders || "{}");
+    const modelName = agentConfig.model || undefined;
 
     for (const tc of cases) {
       const startTime = Date.now();
@@ -39,9 +40,15 @@ export async function POST(request: NextRequest) {
       try {
         let fullResponse = "";
 
-        if (agentConfig.type === "openai" || agentConfig.type === "openrouter") {
-          const baseUrl = agentConfig.type === "openrouter" ? "https://openrouter.ai/api/v1" : "https://api.openai.com/v1";
-          const res = await fetch(`${baseUrl}/chat/completions`, {
+        if (agentConfig.type === "openai" || agentConfig.type === "openrouter" || agentConfig.type === "deepseek") {
+          const baseUrls: Record<string, string> = {
+            openrouter: "https://openrouter.ai/api/v1",
+            deepseek: "https://api.deepseek.com/v1",
+            openai: "https://api.openai.com/v1",
+          };
+          // Use project's configured endpoint, or fall back to the default for this agent type
+          const endpoint = project.agentEndpoint || `${baseUrls[agentConfig.type] || baseUrls.openai}/chat/completions`;
+          const res = await fetch(endpoint, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -49,7 +56,7 @@ export async function POST(request: NextRequest) {
               ...(agentConfig.type === "openrouter" ? { "HTTP-Referer": "https://evaldesk.dev" } : {}),
             },
             body: JSON.stringify({
-              model: agentConfig.bodyTemplate?.model || "gpt-4o-mini",
+              model: modelName || agentConfig.bodyTemplate?.model || (agentConfig.type === "deepseek" ? "deepseek-chat" : agentConfig.type === "openrouter" ? "openai/gpt-4o-mini" : "gpt-4o-mini"),
               messages: [{ role: "user", content: tc.input }],
               max_tokens: agentConfig.bodyTemplate?.max_tokens || 1000,
               stream: true,

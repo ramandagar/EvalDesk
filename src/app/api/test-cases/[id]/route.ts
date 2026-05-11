@@ -3,6 +3,20 @@ import { db } from "@/db";
 import { testCases } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  try {
+    const [tc] = await db.select().from(testCases).where(eq(testCases.id, id));
+    if (!tc) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(tc);
+  } catch {
+    return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
+  }
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

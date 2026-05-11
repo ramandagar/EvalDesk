@@ -375,6 +375,72 @@ function initTables(sqlite: Database.Database) {
       ip_address TEXT,
       created_at INTEGER NOT NULL DEFAULT (unixepoch())
     );
+
+    -- Billing & Marketing
+    CREATE TABLE IF NOT EXISTS plans (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      price REAL NOT NULL DEFAULT 0,
+      interval TEXT DEFAULT 'month',
+      features TEXT,
+      limits TEXT,
+      stripe_price_id TEXT,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    );
+
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      plan_id TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active',
+      stripe_customer_id TEXT,
+      stripe_subscription_id TEXT,
+      current_period_start INTEGER,
+      current_period_end INTEGER,
+      cancel_at_period_end INTEGER DEFAULT 0,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+      updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+    );
+
+    CREATE TABLE IF NOT EXISTS blog_posts (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      content TEXT NOT NULL,
+      excerpt TEXT,
+      author TEXT NOT NULL,
+      cover_image TEXT,
+      published_at INTEGER,
+      tags TEXT,
+      is_published INTEGER DEFAULT 0,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+      updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+    );
+
+    CREATE TABLE IF NOT EXISTS invoices (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      subscription_id TEXT,
+      amount REAL NOT NULL,
+      currency TEXT DEFAULT 'usd',
+      status TEXT NOT NULL DEFAULT 'draft',
+      stripe_invoice_id TEXT,
+      pdf_url TEXT,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    );
+
+    CREATE TABLE IF NOT EXISTS onboarding_state (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      current_step INTEGER NOT NULL DEFAULT 1,
+      completed_steps TEXT,
+      role TEXT,
+      use_case TEXT,
+      agent_type TEXT,
+      is_complete INTEGER DEFAULT 0,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+      updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+    );
   `);
 
   // Add new columns to existing tables (safe — ignores if column already exists)

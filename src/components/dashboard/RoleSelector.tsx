@@ -13,13 +13,13 @@ interface Member {
 
 interface Props { projectId: string; }
 
-const roles = ["owner", "admin", "editor", "viewer"];
+const roles = ["owner", "admin", "reviewer", "readonly"];
 
 const roleBadge: Record<string, { bg: string; text: string }> = {
   owner: { bg: "bg-amber-500/10", text: "text-amber-500" },
   admin: { bg: "bg-purple-500/10", text: "text-purple-500" },
-  editor: { bg: "bg-blue-500/10", text: "text-blue-500" },
-  viewer: { bg: "bg-black/[0.03] dark:bg-white/[0.03]", text: "text-[#8a8f98]" },
+  reviewer: { bg: "bg-blue-500/10", text: "text-blue-500" },
+  readonly: { bg: "bg-black/[0.03] dark:bg-white/[0.03]", text: "text-[#8a8f98]" },
 };
 
 export function RoleSelector({ projectId }: Props) {

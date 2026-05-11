@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
     const result = await scoreSafety(runResultId, apiKey);
     return NextResponse.json(result);
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    const status = e.message?.includes("API key") ? 400 : 500;
+    return NextResponse.json({ error: e.message }, { status });
   }
 }
