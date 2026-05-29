@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EvalDesk — High-Level Design & Live Simulation</title>
+<style>
+  :root{
+    --bg:#0b0f1a; --panel:#121829; --panel2:#0e1422; --line:#243049;
+    --text:#e6ecff; --muted:#8b97b8; --accent:#6ea8fe;
+    --signup:#7c5cff; --import:#2dd4bf; --review:#f59e0b; --dash:#34d399; --bill:#f472b6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%, #16203a 0%, var(--bg) 60%);
+       color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif}
+  header{padding:22px 28px 8px}
+  h1{margin:0;font-size:22px;letter-spacing:.3px}
+  h1 span{color:var(--accent)}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px;max-width:900px}
+  .wrap{display:grid;grid-template-columns:1fr 340px;gap:18px;padding:14px 28px 32px}
+  @media(max-width:1100px){.wrap{grid-template-columns:1fr}}
+  .stage{background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
+         border:1px solid var(--line);border-radius:16px;padding:10px;position:relative;overflow:hidden}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;padding:6px 4px 12px}
+  .btn{cursor:pointer;border:1px solid var(--line);background:#161d31;color:var(--text);
+       padding:8px 14px;border-radius:10px;font-size:13px;font-weight:600;transition:.15s;display:flex;align-items:center;gap:7px}
+  .btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .btn .dot{width:9px;height:9px;border-radius:50%}
+  .btn.active{box-shadow:0 0 0 2px rgba(110,168,254,.35) inset;background:#1c2640}
+  .btn.play{background:var(--accent);color:#06122e;border-color:var(--accent)}
+  svg{width:100%;height:auto;display:block}
+  .node rect{transition:.25s}
+  .node text{font-size:12px;font-weight:600;fill:var(--text);pointer-events:none}
+  .node .sub{font-size:10px;font-weight:500;fill:var(--muted)}
+  .edge{stroke:#2a3552;stroke-width:1.6;fill:none}
+  .node.hot rect{stroke-width:2.4}
+  .panel{background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
+         border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column}
+  .panel h3{margin:0 0 4px;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+  .scenario-name{font-size:16px;font-weight:700;margin-bottom:10px}
+  .log{flex:1;overflow:auto;font-size:13px;line-height:1.5}
+  .log .step{padding:8px 10px;margin:6px 0;border-radius:9px;background:#0f1525;border-left:3px solid var(--line);
+             opacity:0;transform:translateX(8px);animation:slidein .35s forwards}
+  .log .step .n{display:inline-block;min-width:20px;font-weight:700;color:var(--accent)}
+  .log .done{margin-top:10px;font-weight:700;color:var(--dash)}
+  @keyframes slidein{to{opacity:1;transform:none}}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;padding:10px 4px 0;font-size:11px;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .legend i{width:18px;height:3px;border-radius:2px;display:inline-block}
+  .speed{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:12px;color:var(--muted)}
+  input[type=range]{accent-color:var(--accent)}
+  .foot{color:var(--muted);font-size:11px;padding:0 28px 24px}
+</style>
+</head>
+<body>
+<header>
+  <h1>EvalDesk — <span>High-Level Design</span> &amp; Live Data-Flow Simulation</h1>
+  <div class="sub">Pick a scenario and press <b>Play</b>. The glowing packet shows how a request moves through the system — which node does what, and in what order. Human expert = source of truth; AI = assistive.</div>
+</header>
+
+<div class="wrap">
+  <div>
+    <div class="stage">
+      <div class="controls">
+        <button class="btn play" id="playBtn">▶ Play</button>
+        <button class="btn active" data-s="0"><i class="dot" style="background:var(--signup)"></i>Sign Up / Auth</button>
+        <button class="btn" data-s="1"><i class="dot" style="background:var(--import)"></i>Import data</button>
+        <button class="btn" data-s="2"><i class="dot" style="background:var(--review)"></i>Review + AI Judge</button>
+        <button class="btn" data-s="3"><i class="dot" style="background:var(--dash)"></i>Dashboard</button>
+        <button class="btn" data-s="4"><i class="dot" style="background:var(--bill)"></i>Billing</button>
+        <div class="speed">speed <input id="speed" type="range" min="0.5" max="3" step="0.5" value="1.4"></div>
+      </div>
+      <svg id="svg" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="pktg"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#6ea8fe"/></radialGradient>
+        </defs>
+        <g id="edges"></g>
+        <g id="activeEdge"></g>
+        <g id="nodes"></g>
+        <circle id="pkt" r="8" fill="url(#pktg)" filter="url(#glow)" opacity="0"/>
+      </svg>
+      <div class="legend">
+        <span><i style="background:var(--signup)"></i>Auth flow</span>
+        <span><i style="background:var(--import)"></i>Import / ingest</span>
+        <span><i style="background:var(--review)"></i>Evaluation</span>
+        <span><i style="background:var(--dash)"></i>Analytics</span>
+        <span><i style="background:var(--bill)"></i>Billing</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Narration</h3>
+    <div class="scenario-name" id="scName"></div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+<div class="foot">Self-contained file · no external dependencies · open in any browser. Architecture: Next.js (Vercel) · Postgres (Neon) · Drizzle ORM · Clerk auth · Stripe · BYO-key LLM judge · Monocle/OTLP trace ingest.</div>
+
+<script>
+const NODES = {
+  user:    {x:40, y:300, w:160, h:80, t:"👤 User", s:"Non-engineer / Builder", c:"#9aa7c7"},
+  clerk:   {x:300,y:30,  w:170, h:70, t:"🔐 Clerk", s:"Auth · sessions · SSO-ready", c:"#7c5cff"},
+  stripe:  {x:760,y:30,  w:170, h:70, t:"💳 Stripe", s:"Checkout · webhooks", c:"#f472b6"},
+  ui:      {x:300,y:165, w:170, h:80, t:"🖥️ Next.js UI", s:"Review loop · Dashboard", c:"#6ea8fe"},
+  api:     {x:300,y:305, w:170, h:80, t:"🔌 API Routes", s:"+ Zod validation", c:"#6ea8fe"},
+  services:{x:560,y:305, w:180, h:80, t:"⚙️ Services /lib", s:"eval · judge · import", c:"#34d399"},
+  drizzle: {x:830,y:305, w:150, h:80, t:"🗄️ Drizzle ORM", s:"type-safe queries", c:"#2dd4bf"},
+  postgres:{x:1030,y:305,w:150, h:80, t:"🐘 Postgres", s:"Neon · multi-tenant", c:"#2dd4bf"},
+  llm:     {x:560,y:475, w:180, h:80, t:"🤖 LLM Provider", s:"AI-assist judge · BYO key", c:"#f59e0b"},
+  monocle: {x:300,y:475, w:170, h:80, t:"📡 Monocle / OTLP", s:"trace ingest endpoint", c:"#2dd4bf"},
+};
+const EDGES = [["user","ui"],["ui","api"],["ui","clerk"],["ui","stripe"],
+  ["api","services"],["services","drizzle"],["drizzle","postgres"],["services","llm"],["monocle","api"]];
+
+const C = getComputedStyle(document.documentElement);
+const COL = {signup:"#7c5cff",import:"#2dd4bf",review:"#f59e0b",dash:"#34d399",bill:"#f472b6"};
+
+const SCENARIOS = [
+ {name:"Sign Up / Auth", color:COL.signup, steps:[
+   ["user","ui","User opens app, clicks Sign Up"],
+   ["ui","clerk","Credentials handed to Clerk (no custom auth)"],
+   ["clerk","ui","Verified session token returned"],
+   ["ui","api","First authenticated request"],
+   ["api","services","Create Org (tenant) + default Project"],
+   ["services","drizzle","Build type-safe insert"],
+   ["drizzle","postgres","Persist tenant rows"],
+   ["postgres","ui","Empty workspace ready → dashboard"],
+ ]},
+ {name:"Import data (CSV + Monocle traces)", color:COL.import, steps:[
+   ["user","ui","User uploads a CSV/Sheet of agent answers"],
+   ["ui","api","POST /api/import (multipart)"],
+   ["api","services","Parse rows → map to TestCases + Runs"],
+   ["monocle","api","Builder pipes OTLP traces → /api/ingest"],
+   ["api","services","Trace spans → TestCase (prompt) + Run (answer)"],
+   ["services","drizzle","Bulk insert"],
+   ["drizzle","postgres","Store TestCases + Runs"],
+   ["postgres","ui","Queue of answers ready to review"],
+ ]},
+ {name:"Expert Review + AI Judge", color:COL.review, steps:[
+   ["user","ui","Expert opens the review screen"],
+   ["ui","api","GET next Run + Criteria"],
+   ["api","postgres","Fetch question, agent answer, criteria"],
+   ["postgres","ui","Render: question + answer + score buttons"],
+   ["ui","api","(optional) request AI suggestion"],
+   ["api","llm","Draft score + reason via BYO key"],
+   ["llm","ui","Suggests 7/10 + rationale (assistive)"],
+   ["user","ui","Expert overrides → 8/10 (human = truth)"],
+   ["ui","api","Save Evaluation"],
+   ["api","postgres","Persist human verdict"],
+ ]},
+ {name:"Dashboard / Analytics", color:COL.dash, steps:[
+   ["user","ui","Manager opens the dashboard"],
+   ["ui","api","GET /api/metrics?project"],
+   ["api","services","Aggregate scores, pass-rate, by-criteria"],
+   ["services","postgres","Run aggregation query"],
+   ["postgres","ui","Pass rate · trend · breakdown (screenshot-ready)"],
+ ]},
+ {name:"Billing (Upgrade to Pro)", color:COL.bill, steps:[
+   ["user","ui","User clicks Upgrade"],
+   ["ui","stripe","Redirect to Stripe Checkout (no custom billing UI)"],
+   ["stripe","api","Webhook → /api/billing/webhook"],
+   ["api","services","Verify event, set plan = Pro"],
+   ["services","postgres","Update Org subscription"],
+   ["postgres","ui","Pro features unlocked"],
+ ]},
+];
+
+const ns="http://www.w3.org/2000/svg";
+const center = n => ({x:NODES[n].x+NODES[n].w/2, y:NODES[n].y+NODES[n].h/2});
+const el = (t,a)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+
+// draw static edges
+const gE=document.getElementById("edges");
+EDGES.forEach(([a,b])=>{const p=center(a),q=center(b);gE.appendChild(el("line",{class:"edge",x1:p.x,y1:p.y,x2:q.x,y2:q.y}));});
+
+// draw nodes
+const gN=document.getElementById("nodes");
+for(const k in NODES){const n=NODES[k];
+  const g=el("g",{class:"node",id:"n_"+k});
+  g.appendChild(el("rect",{x:n.x,y:n.y,width:n.w,height:n.h,rx:13,fill:"#141b2e",stroke:n.c,"stroke-width":1.6,opacity:.96}));
+  const t1=el("text",{x:n.x+n.w/2,y:n.y+n.h/2-4,"text-anchor":"middle"});t1.textContent=n.t;
+  const t2=el("text",{x:n.x+n.w/2,y:n.y+n.h/2+15,"text-anchor":"middle",class:"sub"});t2.textContent=n.s;
+  g.appendChild(t1);g.appendChild(t2);gN.appendChild(g);
+}
+
+const pkt=document.getElementById("pkt");
+const aEdge=document.getElementById("activeEdge");
+const log=document.getElementById("log");
+const scName=document.getElementById("scName");
+
+let cur=0, raf=null;
+function setScenario(i){
+  cur=i;
+  document.querySelectorAll(".btn[data-s]").forEach(b=>b.classList.toggle("active",+b.dataset.s===i));
+}
+document.querySelectorAll(".btn[data-s]").forEach(b=>b.onclick=()=>{setScenario(+b.dataset.s);play();});
+document.getElementById("playBtn").onclick=()=>play();
+
+function reset(){
+  if(raf)cancelAnimationFrame(raf);
+  log.innerHTML=""; aEdge.innerHTML=""; pkt.setAttribute("opacity",0);
+  for(const k in NODES){const g=document.getElementById("n_"+k);g.classList.remove("hot");
+    g.querySelector("rect").setAttribute("filter","");g.querySelector("rect").setAttribute("stroke-width",1.6);}
+}
+function highlight(k,col,on){
+  const g=document.getElementById("n_"+k),r=g.querySelector("rect");
+  if(on){g.classList.add("hot");r.setAttribute("filter","url(#glow)");r.setAttribute("stroke",col);r.setAttribute("stroke-width",2.6);}
+  else{g.classList.remove("hot");r.setAttribute("filter","");r.setAttribute("stroke-width",1.6);r.setAttribute("stroke",NODES[k].c);}
+}
+
+function play(){
+  reset();
+  const sc=SCENARIOS[cur], col=sc.color;
+  scName.textContent=sc.name; scName.style.color=col;
+  let i=0, t=0, phase="move", pause=0;
+  pkt.setAttribute("fill","url(#pktg)");
+  function frame(){
+    const speed=parseFloat(document.getElementById("speed").value);
+    const [from,to,txt]=sc.steps[i];
+    const p=center(from), q=center(to);
+    if(phase==="move"){
+      if(t===0){ // start of step: draw active edge + light source
+        aEdge.innerHTML="";
+        aEdge.appendChild(el("line",{x1:p.x,y1:p.y,x2:q.x,y2:q.y,stroke:col,"stroke-width":3,
+          "stroke-linecap":"round","stroke-dasharray":"2 9",filter:"url(#glow)",opacity:.9}));
+        highlight(from,col,true); pkt.setAttribute("opacity",1);
+      }
+      t+=0.018*speed;
+      const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2; // ease
+      pkt.setAttribute("cx",p.x+(q.x-p.x)*Math.min(e,1));
+      pkt.setAttribute("cy",p.y+(q.y-p.y)*Math.min(e,1));
+      pkt.setAttribute("fill",col);
+      if(t>=1){ // arrived
+        highlight(to,col,true);
+        const d=document.createElement("div");d.className="step";d.style.borderLeftColor=col;
+        d.innerHTML='<span class="n">'+(i+1)+'</span> '+txt;
+        log.appendChild(d); log.scrollTop=log.scrollHeight;
+        phase="pause"; pause=0; t=0;
+      }
+    } else {
+      pause+=speed;
+      if(pause>22){
+        highlight(from,col,false);
+        i++; phase="move"; t=0; aEdge.innerHTML="";
+        if(i>=sc.steps.length){
+          pkt.setAttribute("opacity",0);
+          const d=document.createElement("div");d.className="done";d.textContent="✓ Flow complete — "+sc.steps.length+" hops";
+          log.appendChild(d);log.scrollTop=log.scrollHeight;
+          setTimeout(()=>{for(const k in NODES)highlight(k,col,false);},400);
+          return;
+        }
+      }
+    }
+    raf=requestAnimationFrame(frame);
+  }
+  frame();
+}
+setScenario(0); play();
+</script>
+</body>
+</html>
