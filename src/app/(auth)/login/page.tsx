@@ -32,14 +32,7 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (res.ok && data.user) {
-        if (data.isFirstUser) {
-          await fetch("/api/seed", { method: "POST" });
-        }
-        if (data.needsOnboarding) {
-          router.push("/onboarding");
-        } else {
-          router.push("/dashboard");
-        }
+        router.push("/dashboard");
       } else {
         setError(data.error || "Failed to sign in");
       }
@@ -111,7 +104,12 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-5 text-center text-[11px] text-[#8a8f98] dark:text-[#62666d]">
+          {!isSignup && (
+            <p className="mt-3 text-center text-[12px]">
+              <a href="/forgot" className="text-[#8a8f98] hover:text-[#0a0a0a] dark:hover:text-[#f7f8f8] hover:underline">Forgot password?</a>
+            </p>
+          )}
+          <p className="mt-4 text-center text-[11px] text-[#8a8f98] dark:text-[#62666d]">
             Self-hosted &middot; Your data stays on your server
           </p>
         </div>

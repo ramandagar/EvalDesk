@@ -1,36 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const publicPaths = ["/", "/login", "/api/auth/login", "/api/auth/logout", "/api/auth/me", "/api/seed", "/pricing", "/about", "/blog", "/changelog", "/contact", "/terms", "/privacy"];
-const publicPathPrefixes = ["/certificate/", "/api/certificates", "/embed/", "/api/embed/", "/docs/", "/blog/", "/api/blog", "/api/contact", "/billing", "/onboarding"];
+// Presence gate ONLY — never the security boundary. Real authorization happens
+// in-route via requireMember (Node runtime); the Edge middleware just checks
+// that a session cookie is PRESENT and redirects/401s when it isn't. It uses
+// the opaque `evaldesk_session` cookie (the old forgeable `evaldesk_user_id`
+// cookie and the `pathname.includes(".")` bypass are both removed).
+
+const SESSION_COOKIE = "evaldesk_session";
+
+// Exact public paths.
+const publicPaths = new Set(["/", "/login", "/forgot", "/reset", "/pricing", "/about", "/changelog", "/contact", "/terms", "/privacy", "/blog", "/api/health"]);
+
+// Public prefixes: marketing/docs/blog, the public certificate + embed pages,
+// the health probe, the auth endpoints, and the whole versioned API (which
+// self-guards in-route).
+const publicPrefixes = ["/blog/", "/docs", "/certificate/", "/embed/", "/api/health", "/api/auth/", "/api/v1/"];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow public paths
-  if (publicPaths.includes(pathname)) return NextResponse.next();
-  for (const prefix of publicPathPrefixes) {
+  if (publicPaths.has(pathname)) return NextResponse.next();
+  for (const prefix of publicPrefixes) {
     if (pathname.startsWith(prefix)) return NextResponse.next();
   }
 
-  // Allow static files and Next.js internals
-  if (pathname.startsWith("/_next") || pathname.startsWith("/favicon") || pathname.includes(".")) {
-    return NextResponse.next();
-  }
-
-  // Check for auth cookie
-  const userId = req.cookies.get("evaldesk_user_id")?.value;
-  if (!userId) {
-    // API routes return 401
+  const hasSession = Boolean(req.cookies.get(SESSION_COOKIE)?.value);
+  if (!hasSession) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
-    // Dashboard routes redirect to login
     return NextResponse.redirect(new URL("/login", req.url));
   }
-
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // Exclude Next internals + static asset files; everything else hits the gate.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?|map)$).*)"],
 };

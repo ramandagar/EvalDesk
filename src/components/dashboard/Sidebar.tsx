@@ -5,25 +5,25 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   LayoutDashboard, FolderKanban, PanelLeftClose, PanelLeft,
-  Moon, Sun, RotateCcw, Play, GitCompare, BarChart3,
-  Settings, FileText, DollarSign, Cpu, CreditCard
+  Moon, Sun, Settings, FileText, Cpu, Webhook, LogOut, Play, BarChart3, GitCompare, KeyRound, Users
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
-import { toast } from "sonner";
+import { logout } from "@/lib/client/api";
 
 const mainNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/projects", label: "Projects", icon: FolderKanban },
-  { href: "/runs", label: "All Runs", icon: Play },
+  { href: "/runs", label: "Runs", icon: Play },
+  { href: "/test-cases", label: "Test Cases", icon: FileText },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/compare", label: "Compare", icon: GitCompare },
 ];
 
 const secondaryNav = [
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/executive", label: "Executive", icon: DollarSign },
   { href: "/models", label: "Models", icon: Cpu },
-  { href: "/test-cases", label: "Test Cases", icon: FileText },
-  { href: "/billing", label: "Billing", icon: CreditCard },
+  { href: "/team", label: "Team", icon: Users },
+  { href: "/api-keys", label: "API Keys", icon: KeyRound },
+  { href: "/webhooks", label: "Webhooks", icon: Webhook },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -31,16 +31,6 @@ export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { theme, toggle } = useTheme();
-
-  async function resetDemo() {
-    try {
-      await fetch("/api/seed?reset=true", { method: "POST" });
-      toast.success("Demo data loaded");
-      window.location.reload();
-    } catch {
-      toast.error("Failed to load demo data");
-    }
-  }
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -106,14 +96,12 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="border-t border-black/[0.06] dark:border-white/[0.06] p-2 space-y-0.5">
-        {!collapsed && (
-          <button
-            onClick={resetDemo}
-            className="flex items-center gap-2 w-full rounded-lg px-2.5 py-[6px] text-[11px] text-[#8a8f98] dark:text-[#62666d] hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-all duration-150"
-          >
-            <RotateCcw size={12} /> Load demo data
-          </button>
-        )}
+        <button
+          onClick={() => logout()}
+          className="flex items-center gap-2 w-full rounded-lg px-2.5 py-[6px] text-[12px] text-[#8a8f98] dark:text-[#62666d] hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-all duration-150"
+        >
+          <LogOut size={13} /> {!collapsed && "Sign out"}
+        </button>
         <div className="flex items-center justify-between">
           <button
             onClick={toggle}

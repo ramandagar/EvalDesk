@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { getRequestContainer } from "@/lib/http/app-container";
+import { handleLogout } from "@/lib/http/auth-handler";
 
-export async function POST() {
-  const cookieStore = await cookies();
-  cookieStore.delete("evaldesk_user_id");
-  return NextResponse.json({ success: true });
+export const runtime = "nodejs";
+
+export async function POST(req: Request) {
+  return handleLogout(req, (await getRequestContainer()));
 }

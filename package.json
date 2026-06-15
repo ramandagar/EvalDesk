@@ -5,7 +5,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "db:gen": "node scripts/gen-schema.mjs",
+    "check:eval-path": "node scripts/check-eval-path.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "check:open-core": "node scripts/check-open-core.mjs",
+    "worker": "tsx src/worker-main.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -17,6 +26,7 @@
     "lucide-react": "^0.474.0",
     "nanoid": "^5.0.9",
     "next": "^15.2.0",
+    "pg": "^8.21.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.0",
@@ -29,12 +39,16 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "autoprefixer": "^10.4.20",
     "drizzle-kit": "^0.30.0",
     "postcss": "^8.5.0",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^2.1.9"
   }
 }
