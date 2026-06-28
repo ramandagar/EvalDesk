@@ -31,6 +31,7 @@ import type { evalCertificatesRepo } from "@/db/repos/eval-certificates";
 import type { webhooksRepo } from "@/db/repos/webhooks";
 import type { webhookDeliveriesRepo } from "@/db/repos/webhook-deliveries";
 import type { jobsRepo, Job } from "@/db/repos/jobs";
+import type { auditEventsRepo } from "@/db/repos/audit-events";
 
 /** Optional AI-judging configuration. When absent, judging is disabled
  *  (human-only review): run.execute does not enqueue run.judge. */
@@ -60,6 +61,8 @@ export interface JobHandlerDeps {
   webhooks: ReturnType<typeof webhooksRepo>;
   webhookDeliveries: ReturnType<typeof webhookDeliveriesRepo>;
   jobs: ReturnType<typeof jobsRepo>;
+  /** Optional: when present, run finalize + certificate issuance are audited. */
+  auditEvents?: ReturnType<typeof auditEventsRepo>;
   keyring: Keyring;
   fetchImpl: typeof fetch;
   /** DNS resolver for the SSRF guard on webhook delivery (injectable for tests). */
@@ -190,6 +193,7 @@ export async function handleRunFinalize(deps: JobHandlerDeps, job: Job): Promise
       agreementMetrics: deps.agreementMetrics,
       evalCertificates: deps.evalCertificates,
       rubrics: deps.rubrics,
+      auditEvents: deps.auditEvents,
       signer,
       now: deps.now,
     },

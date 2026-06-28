@@ -39,7 +39,9 @@ import { apiKeysService } from "@/lib/services/api-keys-service";
 import { rateLimiter } from "@/lib/services/rate-limiter";
 import { membersService } from "@/lib/services/members-service";
 import { passwordResetService } from "@/lib/services/password-reset-service";
+import { auditService } from "@/lib/services/audit-service";
 import { passwordResetTokensRepo } from "@/db/repos/password-reset-tokens";
+import { auditEventsRepo } from "@/db/repos/audit-events";
 
 export interface Container {
   projects: ReturnType<typeof projectsService>;
@@ -54,6 +56,7 @@ export interface Container {
   rateLimiter: ReturnType<typeof rateLimiter>;
   members: ReturnType<typeof membersService>;
   passwordReset: ReturnType<typeof passwordResetService>;
+  audit: ReturnType<typeof auditService>;
 }
 
 export interface ContainerDeps {
@@ -73,6 +76,7 @@ export function buildContainer(deps: ContainerDeps): Container {
     apiKeys: apiKeysRepo(deps.db, deps.schema),
     now,
   });
+  const audit = auditService({ guard: g, auditEvents: auditEventsRepo(deps.db, deps.schema), now });
   const projectsRepoInst = projectsRepo(deps.db, deps.schema);
   const projects = projectsService({
     guard: g,
@@ -110,6 +114,7 @@ export function buildContainer(deps: ContainerDeps): Container {
     judgeCalibration: judgeCalibrationRepo(deps.db, deps.schema),
     agreementMetrics: agreementMetricsRepo(deps.db, deps.schema),
     jobs: jobsRepoInst,
+    audit,
     now,
   });
   const identity = identityService({
@@ -141,6 +146,7 @@ export function buildContainer(deps: ContainerDeps): Container {
   const apiKeys = apiKeysService({
     guard: g,
     apiKeys: apiKeysRepo(deps.db, deps.schema),
+    audit,
     now,
   });
   const limiter = rateLimiter({ rateLimits: rateLimitsRepo(deps.db, deps.schema), now });
@@ -148,6 +154,7 @@ export function buildContainer(deps: ContainerDeps): Container {
     guard: g,
     memberships: membershipsRepo(deps.db, deps.schema),
     users: usersRepo(deps.db, deps.schema),
+    audit,
     now,
   });
   const passwordReset = passwordResetService({
@@ -157,5 +164,5 @@ export function buildContainer(deps: ContainerDeps): Container {
     hasher: bcryptHasher,
     now,
   });
-  return { projects, testCases, runs, review, identity, webhooks, imports, auth, apiKeys, rateLimiter: limiter, members, passwordReset };
+  return { projects, testCases, runs, review, identity, webhooks, imports, auth, apiKeys, rateLimiter: limiter, members, passwordReset, audit };
 }

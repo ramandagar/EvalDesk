@@ -19,6 +19,7 @@ import { evalCertificatesRepo } from "@/db/repos/eval-certificates";
 import { webhooksRepo } from "@/db/repos/webhooks";
 import { webhookDeliveriesRepo } from "@/db/repos/webhook-deliveries";
 import { jobsRepo } from "@/db/repos/jobs";
+import { auditEventsRepo } from "@/db/repos/audit-events";
 import {
   handleRunExecute,
   handleRunJudge,
@@ -72,6 +73,7 @@ export function buildWorkerContext(deps: WorkerContextDeps): WorkerDeps {
     webhooks: webhooksRepo(deps.db, deps.schema),
     webhookDeliveries: webhookDeliveriesRepo(deps.db, deps.schema),
     jobs: jobsRepo(deps.db, deps.schema),
+    auditEvents: auditEventsRepo(deps.db, deps.schema),
     keyring: deps.keyring,
     fetchImpl: deps.fetchImpl,
     resolve,
