@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   LayoutDashboard, FolderKanban, PanelLeftClose, PanelLeft,
-  Moon, Sun, Settings, FileText, Cpu, Webhook, LogOut, Play, BarChart3, GitCompare, KeyRound, Users
+  Moon, Sun, Settings, FileText, Cpu, Webhook, LogOut, Play, BarChart3, GitCompare, KeyRound, Users, ScrollText
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { logout } from "@/lib/client/api";
@@ -24,6 +24,7 @@ const secondaryNav = [
   { href: "/team", label: "Team", icon: Users },
   { href: "/api-keys", label: "API Keys", icon: KeyRound },
   { href: "/webhooks", label: "Webhooks", icon: Webhook },
+  { href: "/audit", label: "Audit Log", icon: ScrollText },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

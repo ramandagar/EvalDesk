@@ -33,6 +33,7 @@ import {
   handleGetCertificate,
   handleGetCalibration,
   handleRunReport,
+  handleExportReport,
 } from "@/lib/http/review-handler";
 import { handleMe } from "@/lib/http/me-handler";
 import { handleListWebhooks, handleCreateWebhook } from "@/lib/http/webhooks-handler";
@@ -41,6 +42,7 @@ import { handleAnalytics } from "@/lib/http/analytics-handler";
 import { handleCompare } from "@/lib/http/review-handler";
 import { handleListApiKeys, handleCreateApiKey, handleRevokeApiKey } from "@/lib/http/api-keys-handler";
 import { handleImport } from "@/lib/http/imports-handler";
+import { handleListAudit } from "@/lib/http/audit-handler";
 import type { Keyring } from "@/lib/crypto/secrets";
 
 const fakeHasher: PasswordHasher = { hash: async (p) => `h:${p}`, compare: async (p, h) => h === `h:${p}` };
@@ -118,6 +120,7 @@ function endpoints() {
     { name: "POST /runs/:id/signoff", run: (t?: string, o?: string) => handleSubmitSignoff(mk(t, o, { decision: "approve" }), c, runId) },
     { name: "GET /runs/:id/certificate", run: (t?: string, o?: string) => handleGetCertificate(mk(t, o), c, runId) },
     { name: "GET /runs/:id/results", run: (t?: string, o?: string) => handleRunReport(mk(t, o), c, runId) },
+    { name: "GET /runs/:id/report", run: (t?: string, o?: string) => handleExportReport(mk(t, o), c, runId) },
     { name: "GET /results/:id", run: (t?: string, o?: string) => handleGetReviewItem(mk(t, o), c, resultId) },
     { name: "POST /results/:id/verdicts", run: (t?: string, o?: string) => handleSubmitVerdict(mk(t, o, { label: "pass", attemptId: "a1" }), c, resultId) },
     { name: "GET /projects/:id/calibration", run: (t?: string, o?: string) => handleGetCalibration(mk(t, o), c, projectId) },
@@ -133,6 +136,7 @@ function endpoints() {
     { name: "DELETE /members/:id", run: (t?: string, o?: string) => handleRemoveMember(mk(t, o, undefined, ""), c, "user_x") },
     { name: "GET /analytics", run: (t?: string, o?: string) => handleAnalytics(mk(t, o), c) },
     { name: "GET /compare", run: (t?: string, o?: string) => handleCompare(mk(t, o, undefined, `?a=${runId}&b=${runId}`), c) },
+    { name: "GET /audit", run: (t?: string, o?: string) => handleListAudit(mk(t, o), c) },
   ];
 }
 
@@ -185,10 +189,12 @@ describe("route coverage meta-test", () => {
       "runs/[id]/signoff/route.ts",
       "runs/[id]/certificate/route.ts",
       "runs/[id]/results/route.ts",
+      "runs/[id]/report/route.ts",
       "members/route.ts",
       "members/[userId]/route.ts",
       "analytics/route.ts",
       "compare/route.ts",
+      "audit/route.ts",
       "results/[id]/route.ts",
       "results/[id]/verdicts/route.ts",
       "projects/[id]/calibration/route.ts",
