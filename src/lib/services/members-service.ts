@@ -11,11 +11,14 @@ import { AuthzError } from "@/lib/auth/guard";
 import { isRole, type Role } from "@/lib/auth/roles";
 import type { membershipsRepo } from "@/db/repos/memberships";
 import type { usersRepo } from "@/db/repos/users";
+import type { auditService } from "@/lib/services/audit-service";
 
 export interface MembersServiceDeps {
   guard: ReturnType<typeof guard>;
   memberships: ReturnType<typeof membershipsRepo>;
   users: ReturnType<typeof usersRepo>;
+  /** Optional: when present, member changes are recorded in the audit hash chain. */
+  audit?: ReturnType<typeof auditService>;
   now: () => number;
 }
 
@@ -46,7 +49,7 @@ export function membersService(deps: MembersServiceDeps) {
     },
 
     async addByEmail(token: string | undefined, orgId: string, args: { email: string; role: Role }): Promise<Member> {
-      await deps.guard.requireMember(token, orgId, "member:manage");
+      const ctx = await deps.guard.requireMember(token, orgId, "member:manage");
       if (!isRole(args.role) || args.role === "owner") {
         throw new AuthzError(400, "Pick a role: admin, reviewer, or viewer");
       }
@@ -55,11 +58,12 @@ export function membersService(deps: MembersServiceDeps) {
       if (await deps.memberships.get(orgId, user.id)) throw new AuthzError(409, "Already a member");
 
       await deps.memberships.create({ orgId, userId: user.id, role: args.role, acceptedAt: deps.now(), now: deps.now() });
+      await deps.audit?.record({ orgId, actorId: ctx.user.id }, "member.added", { resourceType: "membership", resourceId: user.id, details: { email: user.email, role: args.role } });
       return { userId: user.id, email: user.email, name: user.name, role: args.role, isYou: false };
     },
 
     async updateRole(token: string | undefined, orgId: string, userId: string, role: Role): Promise<void> {
-      await deps.guard.requireMember(token, orgId, "member:manage");
+      const ctx = await deps.guard.requireMember(token, orgId, "member:manage");
       if (!isRole(role)) throw new AuthzError(400, "Invalid role");
       const current = await deps.memberships.get(orgId, userId);
       if (!current) throw new AuthzError(404, "Not found");
@@ -68,16 +72,18 @@ export function membersService(deps: MembersServiceDeps) {
         throw new AuthzError(400, "An organization must have at least one owner");
       }
       await deps.memberships.updateRole(orgId, userId, role);
+      await deps.audit?.record({ orgId, actorId: ctx.user.id }, "member.role_changed", { resourceType: "membership", resourceId: userId, details: { from: current.role, to: role } });
     },
 
     async remove(token: string | undefined, orgId: string, userId: string): Promise<void> {
-      await deps.guard.requireMember(token, orgId, "member:manage");
+      const ctx = await deps.guard.requireMember(token, orgId, "member:manage");
       const current = await deps.memberships.get(orgId, userId);
       if (!current) throw new AuthzError(404, "Not found");
       if (current.role === "owner" && (await ownerCount(orgId)) <= 1) {
         throw new AuthzError(400, "Can't remove the last owner");
       }
       await deps.memberships.remove(orgId, userId);
+      await deps.audit?.record({ orgId, actorId: ctx.user.id }, "member.removed", { resourceType: "membership", resourceId: userId, details: { role: current.role } });
     },
   };
 }

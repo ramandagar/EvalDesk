@@ -22,6 +22,7 @@ import type { signoffPoliciesRepo } from "@/db/repos/signoff-policies";
 import type { agreementMetricsRepo } from "@/db/repos/agreement-metrics";
 import type { evalCertificatesRepo } from "@/db/repos/eval-certificates";
 import type { rubricsRepo } from "@/db/repos/rubrics";
+import type { auditEventsRepo } from "@/db/repos/audit-events";
 
 export interface Signer {
   privateKeyPem: string;
@@ -40,6 +41,8 @@ export interface FinalizeSignDeps {
   agreementMetrics: ReturnType<typeof agreementMetricsRepo>;
   evalCertificates: ReturnType<typeof evalCertificatesRepo>;
   rubrics: ReturnType<typeof rubricsRepo>;
+  /** Optional: when present, finalize + certificate issuance are recorded in the audit hash chain. */
+  auditEvents?: ReturnType<typeof auditEventsRepo>;
   signer: Signer;
   now: () => number;
 }
@@ -152,6 +155,17 @@ export async function finalizeAndSign(deps: FinalizeSignDeps, args: { orgId: str
   // Lock the run + its adjudications.
   await deps.runs.update(orgId, runId, { status: "signed", completedAt: now });
   await deps.adjudications.lockForResults(orgId, results.map((r) => r.id), now);
+
+  // Record the finalize + issuance in the tamper-evident audit chain (system
+  // actor — this runs in the worker, not behind a user session). Best-effort.
+  if (deps.auditEvents) {
+    try {
+      await deps.auditEvents.append(orgId, { actorId: null, action: "run.finalized", resourceType: "run", resourceId: runId, details: { certificateId: stored.id } }, now);
+      await deps.auditEvents.append(orgId, { actorId: null, action: "certificate.issued", resourceType: "certificate", resourceId: stored.id, details: { contentHash: cert.contentHash } }, now);
+    } catch {
+      // audit failure must never block finalize; the signed cert is the record.
+    }
+  }
 
   return { finalized: true, certificateId: stored.id };
 }

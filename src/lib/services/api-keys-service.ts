@@ -12,10 +12,13 @@ import { AuthzError, DEFAULT_API_KEY_SCOPES, API_KEY_PREFIX } from "@/lib/auth/g
 import { hashToken } from "@/lib/crypto/tokens";
 import type { Capability } from "@/lib/auth/roles";
 import type { apiKeysRepo, ApiKey } from "@/db/repos/api-keys";
+import type { auditService } from "@/lib/services/audit-service";
 
 export interface ApiKeysServiceDeps {
   guard: ReturnType<typeof guard>;
   apiKeys: ReturnType<typeof apiKeysRepo>;
+  /** Optional: when present, key create/revoke are recorded in the audit hash chain. */
+  audit?: ReturnType<typeof auditService>;
   now: () => number;
 }
 
@@ -49,6 +52,7 @@ export function apiKeysService(deps: ApiKeysServiceDeps) {
         expiresAt: args.expiresAt ?? null,
         now: deps.now(),
       });
+      await deps.audit?.record({ orgId, actorId: ctx.user.id }, "api_key.created", { resourceType: "api_key", resourceId: created.id, details: { name: args.name } });
       return { ...toPublic(created), key: raw }; // raw key returned ONCE
     },
 
@@ -58,9 +62,10 @@ export function apiKeysService(deps: ApiKeysServiceDeps) {
     },
 
     async revoke(token: string | undefined, orgId: string, id: string): Promise<void> {
-      await deps.guard.requireMember(token, orgId, "key:manage");
+      const ctx = await deps.guard.requireMember(token, orgId, "key:manage");
       const ok = await deps.apiKeys.revoke(orgId, id, deps.now());
       if (!ok) throw new AuthzError(404, "Not found");
+      await deps.audit?.record({ orgId, actorId: ctx.user.id }, "api_key.revoked", { resourceType: "api_key", resourceId: id });
     },
   };
 }
