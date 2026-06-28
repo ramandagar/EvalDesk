@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronDown, ChevronRight, ShieldCheck } from "lucide-react";
-import { api, type Run } from "@/lib/client/api";
+import { ArrowLeft, ChevronDown, ChevronRight, ShieldCheck, Download, FileCode, FileText, FileJson } from "lucide-react";
+import { api, downloadReport, type Run } from "@/lib/client/api";
 import { Page, PageHeader, Spinner, ErrorBanner, Card, StatusBadge } from "./kit";
 
 interface ResultItem {
@@ -35,6 +35,8 @@ export function RunReport({ runId }: { runId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<Set<string>>(new Set());
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     api.get<{ run: Run; results: ResultItem[] }>(`/runs/${runId}/results`)
@@ -59,6 +61,18 @@ export function RunReport({ runId }: { runId: string }) {
     setOpen((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
   }
 
+  async function download(format: "html" | "csv" | "json") {
+    setMenuOpen(false);
+    setDownloading(true);
+    try {
+      await downloadReport(runId, format);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   return (
     <Page>
       <Link href={`/projects/${run.projectId}`} className="mb-4 inline-flex items-center gap-1 text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] dark:hover:text-[#f7f8f8]"><ArrowLeft size={14} /> Project</Link>
@@ -70,6 +84,25 @@ export function RunReport({ runId }: { runId: string }) {
             <StatusBadge status={run.status} />
             {run.unratedCount > 0 && <Link href={`/review/${run.id}`} className="text-[13px] font-medium text-[#5e7a00] hover:underline">Review {run.unratedCount} →</Link>}
             {run.status === "signed" && <Link href={`/runs/${run.id}/certificate`} className="inline-flex items-center gap-1 text-[13px] font-medium text-indigo-600 hover:underline"><ShieldCheck size={14} /> Certificate</Link>}
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen((s) => !s)}
+                disabled={downloading || results.length === 0}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-black/[0.08] dark:border-white/[0.1] px-3 py-1.5 text-[13px] font-medium text-[#0a0a0a] dark:text-[#f7f8f8] hover:bg-black/[0.03] dark:hover:bg-white/[0.03] disabled:opacity-50"
+              >
+                <Download size={14} /> {downloading ? "Preparing…" : "Download"}
+              </button>
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                  <div className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#16161a] shadow-lg py-1">
+                    <button onClick={() => download("html")} className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-[#0a0a0a] dark:text-[#f7f8f8] hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"><FileCode size={14} className="text-[#8a8f98]" /> HTML report</button>
+                    <button onClick={() => download("csv")} className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-[#0a0a0a] dark:text-[#f7f8f8] hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"><FileText size={14} className="text-[#8a8f98]" /> CSV</button>
+                    <button onClick={() => download("json")} className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-[#0a0a0a] dark:text-[#f7f8f8] hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"><FileJson size={14} className="text-[#8a8f98]" /> JSON</button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         }
       />

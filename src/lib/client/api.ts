@@ -65,6 +65,40 @@ export async function logout(): Promise<void> {
   if (typeof window !== "undefined") window.location.href = "/login";
 }
 
+// Fetch a run report export (html | csv | json) as a blob with the org header +
+// session cookie, then either open it (html — for print-to-PDF) or trigger a
+// file download (csv / json). One helper so the report page never hand-rolls
+// fetch headers.
+export async function downloadReport(runId: string, format: "html" | "csv" | "json"): Promise<void> {
+  const orgId = await org();
+  const res = await fetch(`/api/v1/runs/${runId}/report?format=${format}`, {
+    credentials: "include",
+    headers: { "x-org-id": orgId },
+  });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `HTTP ${res.status}`);
+  const blob = await res.blob();
+
+  if (format === "html") {
+    // Open the self-contained report in a new tab so the user can print to PDF.
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return;
+  }
+
+  const dispo = res.headers.get("content-disposition") ?? "";
+  const match = dispo.match(/filename="?([^"]+)"?/i);
+  const filename = match?.[1] ?? `evaldesk-run-${runId}.${format}`;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 // Shared types
 export interface Project {
   id: string;
