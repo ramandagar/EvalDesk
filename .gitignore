@@ -38,3 +38,8 @@ next-env.d.ts
 
 # docker
 docker-data/
+
+# private/internal docs (not for the public repo)
+PROJECT_EXPLAINER.md
+promo-script.md
+promot-lanuch.md
