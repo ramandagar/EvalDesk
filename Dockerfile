@@ -21,6 +21,8 @@ COPY . .
 RUN mkdir -p data public
 # Migrations are committed under /drizzle and applied by the app on boot
 # (initAppDb → migratePg), so we don't run drizzle-kit at build time.
+# Raise the Node heap so the build completes on memory-constrained hosts.
+ENV NODE_OPTIONS="--max-old-space-size=1024"
 RUN npm run build
 
 # ── runner: minimal production image ─────────────────────────────────────────
