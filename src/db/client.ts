@@ -11,33 +11,37 @@
 // identical. See scripts/db-spec.mjs for the rules.
 // ============================================================================
 
-import Database from "better-sqlite3";
-import { drizzle as drizzleSqlite, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import { migrate as runSqliteMigrations } from "drizzle-orm/better-sqlite3/migrator";
 import * as sqliteSchema from "./schema.sqlite";
 
 /** Canonical schema shape. The PG schema is structurally identical by codegen. */
 export type AppSchema = typeof sqliteSchema;
 
 /** The single typed database surface used by every repository. */
-export type DbHandle = BetterSQLite3Database<AppSchema>;
+export type DbHandle = import("drizzle-orm/better-sqlite3").BetterSQLite3Database<AppSchema>;
 
 export const SQLITE_MIGRATIONS = "drizzle/sqlite";
 export const PG_MIGRATIONS = "drizzle/pg";
 
 // --- SQLite (self-host) -----------------------------------------------------
+// better-sqlite3 + drizzle are imported LAZILY (like pg below) so the module
+// never pulls native deps into a non-Node bundle context (instrumentation.ts).
 
-export function makeSqliteClient(path = ":memory:"): { db: DbHandle; raw: Database.Database } {
+export function makeSqliteClient(path = ":memory:"): { db: DbHandle; raw: import("better-sqlite3").Database } {
+  // eval("require") hides these native deps from webpack's static analysis so
+  // they never enter the instrumentation bundle (which runs in a non-Node ctx).
+  const Database = eval("require")("better-sqlite3");
+  const { drizzle } = eval("require")("drizzle-orm/better-sqlite3");
   const raw = new Database(path);
   raw.pragma("journal_mode = WAL");
   raw.pragma("foreign_keys = ON");
   raw.pragma("busy_timeout = 5000");
-  const db = drizzleSqlite(raw, { schema: sqliteSchema });
+  const db = drizzle(raw, { schema: sqliteSchema });
   return { db, raw };
 }
 
 export function migrateSqlite(db: DbHandle, folder = SQLITE_MIGRATIONS): void {
-  runSqliteMigrations(db, { migrationsFolder: folder });
+  const { migrate } = eval("require")("drizzle-orm/better-sqlite3/migrator");
+  migrate(db, { migrationsFolder: folder });
 }
 
 // --- Postgres (cloud / scaled self-host) ------------------------------------
@@ -57,9 +61,9 @@ export interface PgClient {
 }
 
 export async function makePgClient(url: string): Promise<PgClient> {
-  const { Pool } = await import("pg");
-  const { drizzle } = await import("drizzle-orm/node-postgres");
-  const { migrate } = await import("drizzle-orm/node-postgres/migrator");
+  const { Pool } = eval("require")("pg");
+  const { drizzle } = eval("require")("drizzle-orm/node-postgres");
+  const { migrate } = eval("require")("drizzle-orm/node-postgres/migrator");
   const pgSchema = await import("./schema.pg");
   const pool = new Pool({ connectionString: url });
   const db = drizzle(pool, { schema: pgSchema }) as unknown as DbHandle;
@@ -84,7 +88,7 @@ export async function makePgClient(url: string): Promise<PgClient> {
 
 /** Plain migration (no advisory lock) — used by tests against an isolated DB. */
 export async function migratePg(db: DbHandle, folder = PG_MIGRATIONS): Promise<void> {
-  const { migrate } = await import("drizzle-orm/node-postgres/migrator");
+  const { migrate } = eval("require")("drizzle-orm/node-postgres/migrator");
   await migrate(db as unknown as Parameters<typeof migrate>[0], { migrationsFolder: folder });
 }
 
