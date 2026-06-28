@@ -1,17 +1,50 @@
-version: "3.8"
+# EvalDesk — single-node self-host (app + in-process worker + Postgres).
+# Secrets are read from a .env file next to this one (see .env.example).
+# Deploy:  cp .env.example .env  → edit →  docker compose up -d --build
 
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-evaldesk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required — set it in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-evaldesk}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-evaldesk}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
   evaldesk:
     build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DB_DRIVER: postgres
+      DATABASE_URL: postgres://${POSTGRES_USER:-evaldesk}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-evaldesk}
+      EVALDESK_ENCRYPTION_KEYS: ${EVALDESK_ENCRYPTION_KEYS:?EVALDESK_ENCRYPTION_KEYS is required}
+      EVALDESK_ACTIVE_KEY_ID: ${EVALDESK_ACTIVE_KEY_ID:?EVALDESK_ACTIVE_KEY_ID is required}
+      JUDGE_PROVIDER: ${JUDGE_PROVIDER:-deepseek}
+      JUDGE_MODEL: ${JUDGE_MODEL:-deepseek-chat}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      EVALDESK_SMTP_URL: ${EVALDESK_SMTP_URL:-}
+      EVALDESK_EMAIL_FROM: ${EVALDESK_EMAIL_FROM:-}
+      # Optional worker tuning (defaults shown):
+      WORKER_INTERVAL_MS: ${WORKER_INTERVAL_MS:-2000}
+      EVALDESK_DISABLE_WORKER: ${EVALDESK_DISABLE_WORKER:-0}
     volumes:
       - evaldesk-data:/app/data
-    environment:
-      - NEXTAUTH_SECRET=change-me-in-production
-      - DATABASE_URL=/app/data/evaldesk.db
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-    restart: unless-stopped
 
 volumes:
+  pgdata:
   evaldesk-data:

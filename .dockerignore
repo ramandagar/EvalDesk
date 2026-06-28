@@ -1,0 +1,23 @@
+# Keep build context small + keep secrets out of the image.
+node_modules
+.next
+.git
+.github
+.claude
+.commandcode
+coverage
+data
+*.db
+*.db-*
+.env
+.env.*
+!.env.example
+Dockerfile
+docker-compose.yml
+.dockerignore
+*.log
+npm-debug.log*
+PROJECT_EXPLAINER.md
+promo-script.md
+promot-lanuch.md
+claude-code.md
