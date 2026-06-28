@@ -26,13 +26,16 @@ const signoffSchema = z.object({
   note: z.string().max(10_000).optional(),
 });
 
-/** GET /runs/:id/queue — results still needing a human verdict (blind-aware). */
+/** GET /runs/:id/queue — results still needing a human verdict (blind-aware, paginated). */
 export async function handleReviewQueue(req: Request, c: Container, runId: string): Promise<Response> {
   try {
     const o = org(req);
     if (o instanceof Response) return o;
-    const items = await c.review.queue(getSessionToken(req), o.orgId, runId, { blind: isBlind(req) });
-    return json({ items });
+    const url = new URL(req.url);
+    const limit = url.searchParams.has("limit") ? Math.min(Number(url.searchParams.get("limit")), 100) : 20;
+    const offset = url.searchParams.has("offset") ? Number(url.searchParams.get("offset")) : 0;
+    const result = await c.review.queue(getSessionToken(req), o.orgId, runId, { blind: isBlind(req), limit, offset });
+    return json(result);
   } catch (e) {
     return errorResponse(e);
   }

@@ -63,6 +63,24 @@ export function runResultsRepo(db: DbHandle, schema: AppSchema) {
       return rows as RunResult[];
     },
 
+    /** Paginated list of results that still need human review (needsHuman=true). */
+    async listFlaggedForRun(orgId: string, runId: string, opts: { limit?: number; offset?: number } = {}): Promise<{ rows: RunResult[]; total: number }> {
+      const limit = opts.limit ?? 20;
+      const offset = opts.offset ?? 0;
+      const rows = await db
+        .select()
+        .from(t)
+        .where(and(eq(t.orgId, orgId), eq(t.runId, runId), eq(t.needsHuman, true)))
+        .orderBy(t.createdAt)
+        .limit(limit)
+        .offset(offset);
+      const allFlagged = await db
+        .select({ id: t.id })
+        .from(t)
+        .where(and(eq(t.orgId, orgId), eq(t.runId, runId), eq(t.needsHuman, true)));
+      return { rows: rows as RunResult[], total: allFlagged.length };
+    },
+
     async update(
       orgId: string,
       id: string,

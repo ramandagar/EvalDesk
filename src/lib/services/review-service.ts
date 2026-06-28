@@ -25,6 +25,7 @@ import type { evalCertificatesRepo } from "@/db/repos/eval-certificates";
 import type { judgeCalibrationRepo } from "@/db/repos/judge-calibration";
 import type { agreementMetricsRepo } from "@/db/repos/agreement-metrics";
 import type { jobsRepo } from "@/db/repos/jobs";
+import type { auditService } from "@/lib/services/audit-service";
 
 export interface ReviewServiceDeps {
   guard: ReturnType<typeof guard>;
@@ -41,6 +42,8 @@ export interface ReviewServiceDeps {
   agreementMetrics: ReturnType<typeof agreementMetricsRepo>;
   /** Optional: when present, an approval enqueues a run.finalize job (async sign). */
   jobs?: ReturnType<typeof jobsRepo>;
+  /** Optional: when present, key mutations are recorded in the audit hash chain. */
+  audit?: ReturnType<typeof auditService>;
   now: () => number;
 }
 
@@ -122,19 +125,20 @@ export function reviewService(deps: ReviewServiceDeps) {
   }
 
   return {
-    /** Queue of results still needing a human verdict for a run. */
-    async queue(token: string | undefined, orgId: string, runId: string, opts: { blind?: boolean } = {}): Promise<ReviewItem[]> {
+    /** Queue of results still needing a human verdict for a run (paginated). */
+    async queue(token: string | undefined, orgId: string, runId: string, opts: { blind?: boolean; limit?: number; offset?: number } = {}): Promise<{ items: ReviewItem[]; total: number }> {
       const ctx = await deps.guard.requireMember(token, orgId, "run:read");
       const run = await deps.runs.getInOrg(orgId, runId);
       if (!run) throw new AuthzError(404, "Not found");
-      const results = await deps.runResults.listForRun(orgId, runId);
       const blind = opts.blind ?? false;
+      const limit = opts.limit ?? 20;
+      const offset = opts.offset ?? 0;
+      const { rows, total } = await deps.runResults.listFlaggedForRun(orgId, runId, { limit, offset });
       const out: ReviewItem[] = [];
-      for (const r of results) {
-        if (!r.needsHuman) continue;
+      for (const r of rows) {
         out.push(await serializeItem(orgId, r, { blind, reviewerId: ctx.user.id }));
       }
-      return out;
+      return { items: out, total };
     },
 
     async getItem(token: string | undefined, orgId: string, resultId: string, opts: { blind?: boolean } = {}): Promise<ReviewItem> {
@@ -172,6 +176,7 @@ export function reviewService(deps: ReviewServiceDeps) {
       });
 
       const settled = await reviewSettled(settledDeps, { orgId, runResultId: resultId });
+      await deps.audit?.record({ orgId, actorId: ctx.user.id }, "verdict.submitted", { resourceType: "run_result", resourceId: resultId, details: { label: args.label } });
       return { ...settled, inserted };
     },
 
@@ -189,6 +194,7 @@ export function reviewService(deps: ReviewServiceDeps) {
       if (args.decision === "approve" && deps.jobs) {
         await deps.jobs.enqueue({ orgId, type: "run.finalize", payload: { runId }, now: deps.now() });
       }
+      await deps.audit?.record({ orgId, actorId: ctx.user.id }, "run.signoff", { resourceType: "run", resourceId: runId, details: { decision: args.decision } });
       return { decision: so.decision };
     },
 

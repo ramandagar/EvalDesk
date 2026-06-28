@@ -109,8 +109,9 @@ describe("reviewService — blind payload contract (server-enforced)", () => {
   it("queue lists only results that still need a human", async () => {
     const { svc, a, run } = await setup();
     const q = await svc.queue(a.token, a.org.id, run.id, { blind: true });
-    expect(q).toHaveLength(1);
-    expect(q[0].blind).toBe(true);
+    expect(q.items).toHaveLength(1);
+    expect(q.total).toBe(1);
+    expect(q.items[0].blind).toBe(true);
   });
 });
 

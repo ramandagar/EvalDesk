@@ -46,6 +46,7 @@ function attemptId(): string {
 export function ReviewWorkspace({ runId, blind = false }: { runId: string; blind?: boolean }) {
   const [orgId, setOrgId] = useState<string | null>(null);
   const [items, setItems] = useState<ReviewItem[]>([]);
+  const [total, setTotal] = useState(0);
   const [idx, setIdx] = useState(0);
   const [rationale, setRationale] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
@@ -55,11 +56,12 @@ export function ReviewWorkspace({ runId, blind = false }: { runId: string; blind
   const [showLegend, setShowLegend] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
 
+  const PAGE_SIZE = 20;
+
   const load = useCallback(async () => {
     setStatus("loading");
     try {
       const me = await api(`/me`, "", {}).catch(async () => {
-        // /me needs no org header; call directly
         const r = await fetch("/api/v1/me", { credentials: "include" });
         if (!r.ok) throw new Error("not authenticated");
         return r.json();
@@ -67,14 +69,14 @@ export function ReviewWorkspace({ runId, blind = false }: { runId: string; blind
       const org = me.activeOrgId ?? me.orgs?.[0]?.id;
       if (!org) throw new Error("no organization for this account");
       setOrgId(org);
-      // resolve the run's project (for the calibration/agreement panels on completion)
       await api(`/runs/${runId}`, org)
         .then((r) => setProjectId(r?.run?.projectId ?? null))
         .catch(() => {});
-      const { items } = await api(`/runs/${runId}/queue?blind=${isBlind}`, org);
-      setItems(items);
+      const data = await api(`/runs/${runId}/queue?blind=${isBlind}&limit=${PAGE_SIZE}&offset=0`, org);
+      setItems(data.items);
+      setTotal(data.total);
       setIdx(0);
-      setStatus(items.length ? "ready" : "done");
+      setStatus(data.items.length ? "ready" : "done");
     } catch (e) {
       setError((e as Error).message);
       setStatus("error");
@@ -96,12 +98,22 @@ export function ReviewWorkspace({ runId, blind = false }: { runId: string; blind
           method: "POST",
           body: JSON.stringify({ label, attemptId: attemptId(), rationale: rationale || undefined }),
         });
-        // advance only after the server confirms
         setRationale("");
         setSelected(null);
-        if (idx + 1 >= items.length) setStatus("done");
-        else {
-          setIdx(idx + 1);
+        const nextIdx = idx + 1;
+        // If we've reached the end of the current page but more flagged items
+        // remain, fetch the next page before advancing.
+        if (nextIdx >= items.length) {
+          if (nextIdx < total) {
+            const data = await api(`/runs/${runId}/queue?blind=${isBlind}&limit=${PAGE_SIZE}&offset=${nextIdx}`, orgId);
+            setItems(data.items);
+            setIdx(0);
+            setStatus(data.items.length ? "ready" : "done");
+          } else {
+            setStatus("done");
+          }
+        } else {
+          setIdx(nextIdx);
           setStatus("ready");
         }
       } catch (e) {
@@ -109,7 +121,7 @@ export function ReviewWorkspace({ runId, blind = false }: { runId: string; blind
         setStatus("error");
       }
     },
-    [orgId, current, status, rationale, idx, items.length],
+    [orgId, current, status, rationale, idx, items.length, total, runId, isBlind],
   );
 
   // Keyboard-first controls (1/2/3 suppressed inside the rationale textarea).
@@ -133,7 +145,7 @@ export function ReviewWorkspace({ runId, blind = false }: { runId: string; blind
     return () => window.removeEventListener("keydown", onKey);
   }, [selected, submit]);
 
-  const progress = useMemo(() => (items.length ? Math.round((idx / items.length) * 100) : 0), [idx, items.length]);
+  const progress = useMemo(() => (total ? Math.round((idx / total) * 100) : 0), [idx, total]);
 
   if (status === "loading") return <Centered>Loading review queue…</Centered>;
   if (status === "error") return <Centered><span className="text-red-600">⚠ {error}</span></Centered>;
@@ -156,7 +168,7 @@ export function ReviewWorkspace({ runId, blind = false }: { runId: string; blind
       {/* Header: progress + why-queued + blind toggle */}
       <header className="px-6 py-3 border-b border-neutral-200 dark:border-neutral-800 flex items-center gap-4">
         <div className="text-sm font-medium">
-          Item {idx + 1} <span className="text-neutral-400">/ {items.length}</span>
+          Item {idx + 1} <span className="text-neutral-400">/ {total}</span>
         </div>
         <div className="flex-1 h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
           <div className="h-full bg-[#ABC83A] transition-all" style={{ width: `${progress}%` }} />
