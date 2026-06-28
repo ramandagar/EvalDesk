@@ -5,6 +5,8 @@
 // (lazy-imported, so it's an optional dependency, never required to build/run).
 // ============================================================================
 
+import { logger } from "@/lib/logger";
+
 export interface EmailMessage {
   to: string;
   subject: string;
@@ -15,9 +17,14 @@ export interface EmailSender {
   send(msg: EmailMessage): Promise<void>;
 }
 
+const emailLog = logger.child({ component: "email" });
+
 export const consoleEmailSender: EmailSender = {
   async send(msg) {
-    console.log(`[email] to=${msg.to} subject="${msg.subject}"\n${msg.text}\n`);
+    // The full body is intentional: in self-host this IS the delivery channel
+    // (e.g. the password-reset link). Route it through the structured logger so
+    // it lands in the same machine-parseable stream as everything else.
+    emailLog.info("delivered (console)", { to: msg.to, subject: msg.subject, body: msg.text });
   },
 };
 
@@ -40,6 +47,7 @@ export async function resolveEmailSender(): Promise<EmailSender> {
     };
   } catch {
     // nodemailer not installed / SMTP misconfigured → don't break, fall back.
+    emailLog.warn("SMTP sender unavailable, falling back to console", {});
     return consoleEmailSender;
   }
 }

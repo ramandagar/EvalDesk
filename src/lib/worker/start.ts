@@ -1,6 +1,6 @@
 // ============================================================================
 // Worker runtime entrypoint. Started once from instrumentation.ts after the DB
-// is initialized. Builds the worker context from the runtime DB + env keyring,
+// is initialized. Builds the worker context from the runtime DB + keyring,
 // wires an SSRF-guarded fetch for agent/webhook calls and a DNS resolver, and
 // drains the job queue on an interval (in-process — fine for single-node
 // self-host and for SQLite; on Postgres you can also run this as a separate
@@ -14,7 +14,10 @@ import { getRuntime } from "@/db/runtime";
 import { loadKeyringFromEnv } from "@/lib/crypto/keyring";
 import { guardedFetch, type SafeFetchDeps } from "@/lib/net/ssrf";
 import { resolveProvider, isProviderName } from "@/lib/provider-factory";
+import { logger } from "@/lib/logger";
 import type { JudgeConfig } from "./handlers";
+
+const log = logger.child({ component: "worker" });
 
 let started = false;
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -75,7 +78,7 @@ export function startWorker(): void {
   const intervalMs = process.env.WORKER_INTERVAL_MS ? Number(process.env.WORKER_INTERVAL_MS) : 2000;
   const tick = () => {
     lastTickAt = Date.now();
-    drainWorker(ctx).catch((e) => console.error("[worker] drain error:", e instanceof Error ? e.message : e));
+    drainWorker(ctx).catch((e) => log.error("drain error", { err: e instanceof Error ? e : String(e) }));
   };
   timer = setInterval(tick, intervalMs);
   tick();
@@ -86,8 +89,8 @@ export function startWorker(): void {
   reaperTimer = setInterval(() => {
     ctx.jobs
       .reapStale(Date.now(), staleMs)
-      .then((n) => n > 0 && console.log(`[worker] reaped ${n} stale job(s)`))
-      .catch((e) => console.error("[worker] reap error:", e instanceof Error ? e.message : e));
+      .then((n) => n > 0 && log.info("reaped stale jobs", { count: n }))
+      .catch((e) => log.error("reap error", { err: e instanceof Error ? e : String(e) }));
   }, reapMs);
 
   // Graceful shutdown: stop the timers on SIGTERM/SIGINT so a deploy doesn't
@@ -97,7 +100,7 @@ export function startWorker(): void {
     process.once(sig, () => stopWorker());
   }
 
-  console.log(`[worker] started (interval ${intervalMs}ms, reaper ${reapMs}ms/stale ${staleMs}ms, judge ${judge ? "enabled" : "disabled — human-only"})`);
+  log.info("started", { intervalMs, reapMs, staleMs, judge: judge ? "enabled" : "disabled-human-only" });
 }
 
 export function stopWorker(): void {

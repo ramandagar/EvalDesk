@@ -4,22 +4,25 @@
 // graceful shutdown. Dev/self-host: `npm run worker`.
 import { initAppDb } from "./db/runtime";
 import { startWorker, stopWorker } from "./lib/worker/start";
+import { logger } from "./lib/logger";
+
+const log = logger.child({ component: "worker-main" });
 
 async function main() {
   await initAppDb();
   startWorker();
-  console.log("[worker-main] standalone worker running");
+  log.info("standalone worker running");
 }
 
 for (const sig of ["SIGTERM", "SIGINT"] as const) {
   process.once(sig, () => {
-    console.log(`[worker-main] ${sig} — shutting down`);
+    log.info("shutting down", { signal: sig });
     stopWorker();
     process.exit(0);
   });
 }
 
 main().catch((e) => {
-  console.error("[worker-main] fatal:", e);
+  log.error("fatal startup error", { err: e });
   process.exit(1);
 });
