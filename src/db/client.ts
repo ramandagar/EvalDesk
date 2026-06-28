@@ -61,9 +61,12 @@ export interface PgClient {
 }
 
 export async function makePgClient(url: string): Promise<PgClient> {
-  const { Pool } = eval("require")("pg");
-  const { drizzle } = eval("require")("drizzle-orm/node-postgres");
-  const { migrate } = eval("require")("drizzle-orm/node-postgres/migrator");
+  // Normal dynamic imports (string literals) so Next's standalone tracer copies
+  // these + their transitive deps into the image. Still lazy — only runs here.
+  const pgMod = await import("pg");
+  const Pool = pgMod.Pool ?? pgMod.default?.Pool;
+  const { drizzle } = await import("drizzle-orm/node-postgres");
+  const { migrate } = await import("drizzle-orm/node-postgres/migrator");
   const pgSchema = await import("./schema.pg");
   const pool = new Pool({ connectionString: url });
   const db = drizzle(pool, { schema: pgSchema }) as unknown as DbHandle;
