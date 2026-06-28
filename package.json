@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "check:open-core": "node scripts/check-open-core.mjs",
-    "worker": "tsx src/worker-main.ts"
+    "worker": "tsx src/worker-main.ts",
+    "seed": "npx tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -50,5 +51,6 @@
     "typescript": "^5.7.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^2.1.9"
-  }
+  },
+  "license": "MIT"
 }
