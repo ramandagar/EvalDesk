@@ -426,3 +426,20 @@ export const passwordResetTokens = sqliteTable("password_reset_tokens", {
     passwordResetTokensTokenHashUniq: uniqueIndex("password_reset_tokens_token_hash_uniq").on(t.tokenHash),
     passwordResetTokensUserIdIdx: index("password_reset_tokens_user_id_idx").on(t.userId),
 }));
+
+export const auditEvents = sqliteTable("audit_events", {
+  id: text("id").primaryKey().$defaultFn(() => createId()),
+  orgId: text("org_id").references(() => organizations.id, { onDelete: "cascade" }).notNull(),
+  seq: integer("seq").notNull(),
+  actorId: text("actor_id"),
+  action: text("action").notNull(),
+  resourceType: text("resource_type"),
+  resourceId: text("resource_id"),
+  details: text("details", { mode: "json" }),
+  prevHash: text("prev_hash").notNull(),
+  hash: text("hash").notNull(),
+  createdAt: integer("created_at").notNull(),
+}, (t) => ({
+    auditEventsOrgIdSeqUniq: uniqueIndex("audit_events_org_id_seq_uniq").on(t.orgId, t.seq),
+    auditEventsOrgIdIdx: index("audit_events_org_id_idx").on(t.orgId),
+}));

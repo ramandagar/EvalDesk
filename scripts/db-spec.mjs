@@ -519,6 +519,31 @@ export const tables = [
     uniques: [["token_hash"]],
     indexes: [["user_id"]],
   },
+
+  // ---------------------------------------------------------------------------
+  // Audit log — tamper-evident, per-org hash chain. Each event stores a hash of
+  // (previous hash + canonicalized event fields); altering/reordering any past
+  // event breaks the chain. seq is monotonic per org; the unique (org_id, seq)
+  // makes concurrent appends fail loudly so the chain head can be re-read safely.
+  // ---------------------------------------------------------------------------
+  {
+    name: "audit_events",
+    columns: {
+      id: { kind: "id" },
+      org_id: { kind: "fk", ref: "organizations.id", onDelete: "cascade", nullable: false },
+      seq: { kind: "int", nullable: false },
+      actor_id: { kind: "text", nullable: true },
+      action: { kind: "text", nullable: false },
+      resource_type: { kind: "text", nullable: true },
+      resource_id: { kind: "text", nullable: true },
+      details: { kind: "json", nullable: true },
+      prev_hash: { kind: "text", nullable: false },
+      hash: { kind: "text", nullable: false },
+      created_at: { kind: "ts", nullable: false },
+    },
+    uniques: [["org_id", "seq"]],
+    indexes: [["org_id"]],
+  },
 ];
 
 // Drizzle export name for a table (camelCase singular-ish — we keep the plural

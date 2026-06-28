@@ -57,6 +57,13 @@
       "when": 1780969649817,
       "tag": "0007_odd_liz_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781783153844,
+      "tag": "0008_parallel_zeigeist",
+      "breakpoints": true
     }
   ]
 }
