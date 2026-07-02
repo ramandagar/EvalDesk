@@ -105,6 +105,10 @@ export async function finalizeAndSign(deps: FinalizeSignDeps, args: { orgId: str
   // AI-vs-human agreement metric (project scope), if computed.
   const metric = await deps.agreementMetrics.getLatest(orgId, "project", run.projectId);
 
+  // The judge model that scored this run — recorded in the cert for reproducibility.
+  const aiForRun = await deps.aiScores.listForResults(orgId, results.map((r) => r.id));
+  const judgeModel = aiForRun[0]?.model;
+
   // Build the verdict comparison from adjudications + AI consensus.
   const adjByResult = new Map(adjs.map((a) => [a.runResultId, a]));
   const verdicts = results
@@ -127,7 +131,7 @@ export async function finalizeAndSign(deps: FinalizeSignDeps, args: { orgId: str
     orgId,
     runId,
     projectId: run.projectId,
-    judgeModel: metric ? undefined : undefined,
+    judgeModel,
     weightingScheme: DEFAULT_WEIGHTING,
     kappa: reviewerItems.length > 1 ? reviewerKappa.kappa : null,
     kappaMethod: reviewerKappa.method,
