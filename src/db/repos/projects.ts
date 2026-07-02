@@ -12,6 +12,8 @@ export interface Project {
   agentType: string | null;
   agentHeaders: unknown | null;
   defaultModel: string;
+  judgeBaseUrl: string | null;
+  judgeModel: string | null;
   createdBy: string | null;
   createdAt: number;
   updatedAt: number;
@@ -26,6 +28,8 @@ export interface CreateProjectInput {
   agentType?: string | null;
   agentHeaders?: unknown | null;
   defaultModel?: string;
+  judgeBaseUrl?: string | null;
+  judgeModel?: string | null;
   createdBy?: string | null;
   id?: string;
 }
@@ -38,6 +42,8 @@ export interface UpdateProjectPatch {
   agentType?: string | null;
   agentHeaders?: unknown | null;
   defaultModel?: string;
+  judgeBaseUrl?: string | null;
+  judgeModel?: string | null;
 }
 
 /**
@@ -62,6 +68,8 @@ export function projectsRepo(db: DbHandle, schema: AppSchema) {
           agentType: input.agentType ?? null,
           agentHeaders: input.agentHeaders ?? null,
           defaultModel: input.defaultModel ?? "gpt-4o-mini",
+          judgeBaseUrl: input.judgeBaseUrl ?? null,
+          judgeModel: input.judgeModel ?? null,
           createdBy: input.createdBy ?? null,
           createdAt: input.now,
           updatedAt: input.now,
@@ -122,6 +130,8 @@ export function projectsRepo(db: DbHandle, schema: AppSchema) {
         ...(patch.agentType !== undefined ? { agentType: patch.agentType } : {}),
         ...(patch.agentHeaders !== undefined ? { agentHeaders: patch.agentHeaders } : {}),
         ...(patch.defaultModel !== undefined ? { defaultModel: patch.defaultModel } : {}),
+        ...(patch.judgeBaseUrl !== undefined ? { judgeBaseUrl: patch.judgeBaseUrl } : {}),
+        ...(patch.judgeModel !== undefined ? { judgeModel: patch.judgeModel } : {}),
       };
       const rows = await db
         .update(t)

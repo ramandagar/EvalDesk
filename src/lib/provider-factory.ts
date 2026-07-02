@@ -58,3 +58,14 @@ export function resolveProvider(opts: ResolveProviderOptions): Provider {
     baseUrl: opts.baseUrl ?? spec.baseUrl,
   });
 }
+
+/**
+ * Build a Provider from a raw OpenAI-compatible endpoint — ANY base URL + API
+ * key + model. This is the tenant-configurable path: a project points at its
+ * own judge (DeepSeek, OpenAI, OpenRouter, Ollama, LiteLLM, a self-hosted
+ * vLLM, anything that speaks /chat/completions). Empty key is allowed for
+ * local/no-auth endpoints (Ollama, LiteLLM).
+ */
+export function providerFromConfig(opts: { baseUrl: string; apiKey?: string }): Provider {
+  return new OpenAIProvider({ apiKey: opts.apiKey ?? "", baseUrl: opts.baseUrl });
+}

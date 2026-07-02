@@ -16,6 +16,9 @@ const createSchema = z.object({
   agentHeaders: z.record(z.string()).nullish(),
   defaultModel: z.string().max(100).optional(),
   agentApiKey: z.string().max(400).nullish(),
+  judgeBaseUrl: z.string().url().nullish(), // any OpenAI-compatible endpoint
+  judgeModel: z.string().max(100).nullish(),
+  judgeApiKey: z.string().max(400).nullish(), // encrypted at rest, never returned
 });
 
 const updateSchema = createSchema.partial();

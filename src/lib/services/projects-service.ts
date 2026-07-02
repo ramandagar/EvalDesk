@@ -15,9 +15,10 @@ import { encryptSecret, type Keyring } from "@/lib/crypto/secrets";
 import { buildPage, clampLimit, decodeCursor, type Page } from "@/lib/http/cursor";
 
 const SECRET_REF = "project";
-const SECRET_NAME = "agent_api_key";
-const aad = (orgId: string, projectId: string) =>
-  `org:${orgId}:project:${projectId}:agent_api_key`;
+const AGENT_KEY = "agent_api_key";
+const JUDGE_KEY = "judge_api_key";
+const aad = (orgId: string, projectId: string, name: string) =>
+  `org:${orgId}:project:${projectId}:${name}`;
 
 export interface ProjectsServiceDeps {
   guard: ReturnType<typeof guard>;
@@ -27,8 +28,8 @@ export interface ProjectsServiceDeps {
   now: () => number;
 }
 
-/** Never includes the agent API key; only whether one is set. */
-export type PublicProject = Project & { hasAgentApiKey: boolean };
+/** Never includes either API key; only whether each is set. */
+export type PublicProject = Project & { hasAgentApiKey: boolean; hasJudgeKey: boolean };
 
 export interface CreateProjectArgs {
   name: string;
@@ -39,24 +40,27 @@ export interface CreateProjectArgs {
   agentHeaders?: unknown | null;
   defaultModel?: string;
   agentApiKey?: string | null;
+  judgeBaseUrl?: string | null;
+  judgeModel?: string | null;
+  judgeApiKey?: string | null;
 }
 
-export type UpdateProjectArgs = UpdateProjectPatch & { agentApiKey?: string | null };
+export type UpdateProjectArgs = UpdateProjectPatch & { agentApiKey?: string | null; judgeApiKey?: string | null };
 
 export function projectsService(deps: ProjectsServiceDeps) {
-  async function storeKey(orgId: string, projectId: string, key: string) {
+  async function storeKey(orgId: string, projectId: string, name: string, key: string) {
     await deps.secrets.put({
       orgId,
       refType: SECRET_REF,
       refId: projectId,
-      name: SECRET_NAME,
-      ciphertext: encryptSecret(key, deps.keyring, aad(orgId, projectId)),
+      name,
+      ciphertext: encryptSecret(key, deps.keyring, aad(orgId, projectId, name)),
       now: deps.now(),
     });
   }
 
-  async function hasKey(orgId: string, projectId: string): Promise<boolean> {
-    return (await deps.secrets.get(orgId, SECRET_REF, projectId, SECRET_NAME)) !== null;
+  async function hasKey(orgId: string, projectId: string, name: string): Promise<boolean> {
+    return (await deps.secrets.get(orgId, SECRET_REF, projectId, name)) !== null;
   }
 
   return {
@@ -74,18 +78,29 @@ export function projectsService(deps: ProjectsServiceDeps) {
         agentType: args.agentType,
         agentHeaders: args.agentHeaders,
         defaultModel: args.defaultModel,
+        judgeBaseUrl: args.judgeBaseUrl,
+        judgeModel: args.judgeModel,
         createdBy: ctx.user.id,
         now: deps.now(),
       });
-      if (args.agentApiKey) await storeKey(orgId, project.id, args.agentApiKey);
-      return { ...project, hasAgentApiKey: !!args.agentApiKey };
+      if (args.agentApiKey) await storeKey(orgId, project.id, AGENT_KEY, args.agentApiKey);
+      if (args.judgeApiKey) await storeKey(orgId, project.id, JUDGE_KEY, args.judgeApiKey);
+      return {
+        ...project,
+        hasAgentApiKey: !!args.agentApiKey,
+        hasJudgeKey: !!args.judgeApiKey,
+      };
     },
 
     async get(token: string | undefined, orgId: string, id: string): Promise<PublicProject> {
       await deps.guard.requireMember(token, orgId, "project:read");
       const project = await deps.projects.getInOrg(orgId, id);
       if (!project) throw new AuthzError(404, "Not found");
-      return { ...project, hasAgentApiKey: await hasKey(orgId, id) };
+      return {
+        ...project,
+        hasAgentApiKey: await hasKey(orgId, id, AGENT_KEY),
+        hasJudgeKey: await hasKey(orgId, id, JUDGE_KEY),
+      };
     },
 
     async list(token: string | undefined, orgId: string): Promise<Project[]> {
@@ -113,11 +128,16 @@ export function projectsService(deps: ProjectsServiceDeps) {
       args: UpdateProjectArgs,
     ): Promise<PublicProject> {
       await deps.guard.requireMember(token, orgId, "project:write");
-      const { agentApiKey, ...patch } = args;
+      const { agentApiKey, judgeApiKey, ...patch } = args;
       const updated = await deps.projects.update(orgId, id, patch, deps.now());
       if (!updated) throw new AuthzError(404, "Not found");
-      if (agentApiKey) await storeKey(orgId, id, agentApiKey);
-      return { ...updated, hasAgentApiKey: await hasKey(orgId, id) };
+      if (agentApiKey) await storeKey(orgId, id, AGENT_KEY, agentApiKey);
+      if (judgeApiKey) await storeKey(orgId, id, JUDGE_KEY, judgeApiKey);
+      return {
+        ...updated,
+        hasAgentApiKey: await hasKey(orgId, id, AGENT_KEY),
+        hasJudgeKey: await hasKey(orgId, id, JUDGE_KEY),
+      };
     },
 
     async remove(token: string | undefined, orgId: string, id: string): Promise<void> {

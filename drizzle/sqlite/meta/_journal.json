@@ -64,6 +64,13 @@
       "when": 1781783153010,
       "tag": "0008_volatile_champions",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1782983670755,
+      "tag": "0009_quiet_sage",
+      "breakpoints": true
     }
   ]
 }

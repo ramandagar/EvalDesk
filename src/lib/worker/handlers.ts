@@ -5,6 +5,7 @@
 import { decryptSecret, type Keyring } from "@/lib/crypto/secrets";
 import { executeRun } from "@/lib/runner/run-executor";
 import { judgeRun } from "@/lib/runner/run-judge";
+import { resolveProjectJudge } from "@/lib/runner/judge-config";
 import { recomputeCalibration } from "@/lib/runner/calibration-recompute";
 import { finalizeAndSign } from "@/lib/runner/finalize-sign";
 import { resolveOrCreateSigner } from "@/lib/crypto/signer-bootstrap";
@@ -107,21 +108,29 @@ export async function handleRunExecute(deps: JobHandlerDeps, job: Job): Promise<
     { orgId, runId, projectId, agentConfig },
   );
 
-  // Hand off to the AI judge when judging is configured; otherwise the run is
-  // left for human-only review (results already have needs_human = true).
-  if (deps.judge) {
+  // Hand off to judging when a judge is available: the operator's env judge OR
+  // this project's own judge config (resolved per-run in handleRunJudge).
+  if (deps.judge || project.judgeBaseUrl) {
     await deps.jobs.enqueue({ orgId, type: "run.judge", payload: { runId, projectId }, now: deps.now() });
   }
 }
 
 export async function handleRunJudge(deps: JobHandlerDeps, job: Job): Promise<void> {
-  if (!deps.judge) throw new Error("run.judge received but no judge is configured");
   const orgId = job.orgId;
   const { runId, projectId } = job.payload as { runId: string; projectId: string };
 
+  // Per-project judge wins; env judge is the fallback; none → human-only.
+  const judge = await resolveProjectJudge(
+    { projects: deps.projects, secrets: deps.secrets, keyring: deps.keyring },
+    orgId,
+    projectId,
+    deps.judge,
+  );
+  if (!judge) return; // no judge configured — results stay needsHuman (set by executeRun)
+
   await judgeRun(
     {
-      provider: deps.judge.provider,
+      provider: judge.provider,
       testCases: deps.testCases,
       runs: deps.runs,
       runResults: deps.runResults,
@@ -133,9 +142,9 @@ export async function handleRunJudge(deps: JobHandlerDeps, job: Job): Promise<vo
       orgId,
       runId,
       projectId,
-      specs: deps.judge.specs,
-      auditRate: deps.judge.auditRate,
-      allowSingleJudgeAutoFinalize: deps.judge.allowSingleJudgeAutoFinalize,
+      specs: judge.specs,
+      auditRate: judge.auditRate,
+      allowSingleJudgeAutoFinalize: judge.allowSingleJudgeAutoFinalize,
     },
   );
 

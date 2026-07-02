@@ -106,6 +106,9 @@ export interface Project {
   description: string | null;
   agentEndpoint: string | null;
   hasAgentApiKey?: boolean;
+  judgeBaseUrl?: string | null;
+  judgeModel?: string | null;
+  hasJudgeKey?: boolean;
 }
 export interface TestCase {
   id: string;

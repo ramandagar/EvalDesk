@@ -68,6 +68,8 @@ export const projects = pgTable("projects", {
   agentType: text("agent_type"),
   agentHeaders: jsonb("agent_headers"),
   defaultModel: text("default_model").notNull().default("gpt-4o-mini"),
+  judgeBaseUrl: text("judge_base_url"),
+  judgeModel: text("judge_model"),
   createdBy: text("created_by"),
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
   updatedAt: bigint("updated_at", { mode: "number" }).notNull(),

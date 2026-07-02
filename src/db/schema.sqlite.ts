@@ -68,6 +68,8 @@ export const projects = sqliteTable("projects", {
   agentType: text("agent_type"),
   agentHeaders: text("agent_headers", { mode: "json" }),
   defaultModel: text("default_model").notNull().default("gpt-4o-mini"),
+  judgeBaseUrl: text("judge_base_url"),
+  judgeModel: text("judge_model"),
   createdBy: text("created_by"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),

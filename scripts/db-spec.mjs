@@ -108,6 +108,8 @@ export const tables = [
       agent_type: { kind: "text", nullable: true }, // openai | openrouter | langchain | custom
       agent_headers: { kind: "json", nullable: true }, // non-secret custom headers
       default_model: { kind: "text", nullable: false, default: "gpt-4o-mini" },
+      judge_base_url: { kind: "text", nullable: true }, // per-project judge endpoint — ANY OpenAI-compatible URL
+      judge_model: { kind: "text", nullable: true }, // per-project judge model name
       created_by: { kind: "text", nullable: true },
       created_at: { kind: "ts", nullable: false },
       updated_at: { kind: "ts", nullable: false },

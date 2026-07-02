@@ -13,7 +13,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"cases" | "runs" | "calibration">("cases");
+  const [tab, setTab] = useState<"cases" | "runs" | "calibration" | "judge">("cases");
   const [running, setRunning] = useState(false);
   const [orgId, setOrgId] = useState<string | null>(null);
 
@@ -87,7 +87,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
 
       {/* Tabs */}
       <div className="mb-4 flex gap-1 border-b border-black/[0.06] dark:border-white/[0.06]">
-        {([["cases", `Test cases (${cases.length})`], ["runs", `Runs (${runs.length})`], ["calibration", "Calibration"]] as const).map(([k, label]) => (
+        {([["cases", `Test cases (${cases.length})`], ["runs", `Runs (${runs.length})`], ["judge", "Judge"], ["calibration", "Calibration"]] as const).map(([k, label]) => (
           <button
             key={k}
             onClick={() => setTab(k)}
@@ -102,6 +102,8 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
         <TestCasesTab projectId={projectId} cases={cases} onChange={load} setError={setError} />
       ) : tab === "runs" ? (
         <RunsTab runs={runs} />
+      ) : tab === "judge" ? (
+        <JudgeTab project={project} onChange={load} setError={setError} />
       ) : orgId ? (
         <WedgePanels projectId={projectId} orgId={orgId} />
       ) : (
@@ -240,6 +242,56 @@ function RunsTab({ runs }: { runs: Run[] }) {
           </li>
         ))}
       </ul>
+    </Card>
+  );
+}
+
+function JudgeTab({ project, onChange, setError }: { project: Project; onChange: () => Promise<void>; setError: (s: string) => void }) {
+  const [baseUrl, setBaseUrl] = useState(project.judgeBaseUrl ?? "");
+  const [model, setModel] = useState(project.judgeModel ?? "");
+  const [apiKey, setApiKey] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      await api.put(`/projects/${project.id}`, {
+        judgeBaseUrl: baseUrl.trim() || null,
+        judgeModel: model.trim() || null,
+        ...(apiKey ? { judgeApiKey: apiKey } : {}),
+      });
+      setApiKey("");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1500);
+      await onChange();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="p-5">
+      <form onSubmit={save} className="space-y-4 max-w-xl">
+        <div>
+          <h3 className="text-[14px] font-semibold mb-1">AI Judge</h3>
+          <p className="text-[12px] text-[#8a8f98] mb-3">
+            Point at any OpenAI-compatible endpoint — EvalDesk scores every agent answer with this model.
+            Leave blank to use the server default judge (or human-only review).
+          </p>
+        </div>
+        <Field label="Judge endpoint (base URL)"><Input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder="https://api.deepseek.com/v1" /></Field>
+        <Field label="Model"><Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="deepseek-chat" /></Field>
+        <Field label={project.hasJudgeKey ? "API key (set — paste a new one to replace)" : "API key (optional for local/Ollama)"}><Input value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="sk-..." /></Field>
+        <div className="flex items-center gap-3">
+          <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save judge config"}</Button>
+          {saved && <span className="text-[12px] text-[#5e7a00]">Saved</span>}
+        </div>
+      </form>
     </Card>
   );
 }
