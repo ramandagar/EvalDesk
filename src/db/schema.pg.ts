@@ -97,6 +97,7 @@ export const testCases = pgTable("test_cases", {
   title: text("title").notNull(),
   input: text("input").notNull(),
   expectedOutput: text("expected_output"),
+  context: text("context"),
   category: text("category"),
   order: integer("order").notNull().default(0),
   createdAt: bigint("created_at", { mode: "number" }).notNull(),

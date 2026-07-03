@@ -97,6 +97,7 @@ export const testCases = sqliteTable("test_cases", {
   title: text("title").notNull(),
   input: text("input").notNull(),
   expectedOutput: text("expected_output"),
+  context: text("context"),
   category: text("category"),
   order: integer("order").notNull().default(0),
   createdAt: integer("created_at").notNull(),

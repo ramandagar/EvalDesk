@@ -141,6 +141,7 @@ export const tables = [
       title: { kind: "text", nullable: false },
       input: { kind: "text", nullable: false },
       expected_output: { kind: "text", nullable: true },
+      context: { kind: "text", nullable: true }, // source/retrieved docs for RAG faithfulness eval
       category: { kind: "text", nullable: true },
       order: { kind: "int", nullable: false, default: 0 },
       created_at: { kind: "ts", nullable: false },

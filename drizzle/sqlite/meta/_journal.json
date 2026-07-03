@@ -71,6 +71,13 @@
       "when": 1782983670755,
       "tag": "0009_quiet_sage",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1783095209551,
+      "tag": "0010_funny_wallow",
+      "breakpoints": true
     }
   ]
 }

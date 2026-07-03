@@ -71,6 +71,13 @@
       "when": 1782983671115,
       "tag": "0009_great_toro",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783095225791,
+      "tag": "0010_clean_shiva",
+      "breakpoints": true
     }
   ]
 }
