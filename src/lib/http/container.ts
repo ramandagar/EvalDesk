@@ -42,6 +42,7 @@ import { passwordResetService } from "@/lib/services/password-reset-service";
 import { auditService } from "@/lib/services/audit-service";
 import { passwordResetTokensRepo } from "@/db/repos/password-reset-tokens";
 import { auditEventsRepo } from "@/db/repos/audit-events";
+import { probesService } from "@/lib/services/probes-service";
 
 export interface Container {
   projects: ReturnType<typeof projectsService>;
@@ -57,6 +58,7 @@ export interface Container {
   members: ReturnType<typeof membersService>;
   passwordReset: ReturnType<typeof passwordResetService>;
   audit: ReturnType<typeof auditService>;
+  probes: ReturnType<typeof probesService>;
 }
 
 export interface ContainerDeps {
@@ -164,5 +166,11 @@ export function buildContainer(deps: ContainerDeps): Container {
     hasher: bcryptHasher,
     now,
   });
-  return { projects, testCases, runs, review, identity, webhooks, imports, auth, apiKeys, rateLimiter: limiter, members, passwordReset, audit };
+  const probes = probesService({
+    guard: g,
+    projects: projectsRepoInst,
+    jobs: jobsRepoInst,
+    now,
+  });
+  return { projects, testCases, runs, review, identity, webhooks, imports, auth, apiKeys, rateLimiter: limiter, members, passwordReset, audit, probes };
 }

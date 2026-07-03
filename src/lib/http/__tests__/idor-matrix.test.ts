@@ -44,6 +44,7 @@ import { handleCompare } from "@/lib/http/review-handler";
 import { handleListApiKeys, handleCreateApiKey, handleRevokeApiKey } from "@/lib/http/api-keys-handler";
 import { handleImport } from "@/lib/http/imports-handler";
 import { handleListAudit } from "@/lib/http/audit-handler";
+import { handleGenerateProbes } from "@/lib/http/probes-handler";
 import type { Keyring } from "@/lib/crypto/secrets";
 
 const fakeHasher: PasswordHasher = { hash: async (p) => `h:${p}`, compare: async (p, h) => h === `h:${p}` };
@@ -126,6 +127,7 @@ function endpoints() {
     { name: "GET /results/:id", run: (t?: string, o?: string) => handleGetReviewItem(mk(t, o), c, resultId) },
     { name: "POST /results/:id/verdicts", run: (t?: string, o?: string) => handleSubmitVerdict(mk(t, o, { label: "pass", attemptId: "a1" }), c, resultId) },
     { name: "GET /projects/:id/calibration", run: (t?: string, o?: string) => handleGetCalibration(mk(t, o), c, projectId) },
+    { name: "POST /projects/:id/probes", run: (t?: string, o?: string) => handleGenerateProbes(mk(t, o, { type: "jailbreak", count: 2 }), c, projectId) },
     { name: "GET /webhooks", run: (t?: string, o?: string) => handleListWebhooks(mk(t, o), c) },
     { name: "POST /webhooks", run: (t?: string, o?: string) => handleCreateWebhook(mk(t, o, { url: "https://hooks.test/x", events: ["run.completed"] }), c) },
     { name: "POST /imports", run: (t?: string, o?: string) => handleImport(mk(t, o, { projectId, data: '{"goldens":[{"input":"q","expected_output":"a"}]}' }), c) },
@@ -201,6 +203,7 @@ describe("route coverage meta-test", () => {
       "results/[id]/route.ts",
       "results/[id]/verdicts/route.ts",
       "projects/[id]/calibration/route.ts",
+      "projects/[id]/probes/route.ts",
       "webhooks/route.ts",
       "imports/route.ts",
       "api-keys/route.ts",
