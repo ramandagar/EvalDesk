@@ -11,6 +11,7 @@ import { finalizeAndSign } from "@/lib/runner/finalize-sign";
 import { resolveOrCreateSigner } from "@/lib/crypto/signer-bootstrap";
 import { dispatchEvent, deliverWebhook, type DeliverPayload } from "@/lib/webhooks/dispatch";
 import { callAgent, type AgentType } from "@/lib/runner/agent-runner";
+import { buildProbePrompt, parseProbeResponse, probeCategory, type ProbeType } from "@/lib/ai/safety-probes";
 import type { SafeFetchDeps } from "@/lib/net/ssrf";
 import type { Provider } from "@/lib/ai/provider";
 import type { JudgeSpec } from "@/lib/ai/judge-ensemble";
@@ -234,4 +235,37 @@ export async function handleWebhookDeliver(deps: JobHandlerDeps, job: Job): Prom
     job.orgId,
     p,
   );
+}
+
+/** Generate adversarial test cases (jailbreak / prompt-injection / PII-leak probes)
+ *  asynchronously via the job queue. Each probe is stored as a normal test case so
+ *  the existing judge pipeline picks it up without changes. */
+export async function handleAdversarialGenerate(deps: JobHandlerDeps, job: Job): Promise<void> {
+  const orgId = job.orgId;
+  const { projectId, type, count } = job.payload as { projectId: string; type: ProbeType; count: number };
+  const judge = await resolveProjectJudge(
+    { projects: deps.projects, secrets: deps.secrets, keyring: deps.keyring },
+    orgId,
+    projectId,
+    deps.judge,
+  );
+  if (!judge) throw new Error("No judge configured — set a judge endpoint to generate probes");
+  const result = await judge.provider.complete({
+    model: judge.specs[0]?.model ?? "gpt-4o-mini",
+    messages: [{ role: "user", content: buildProbePrompt(type, count) }],
+    temperature: 0.7,
+    maxTokens: 2000,
+  });
+  const probes = parseProbeResponse(result.text);
+  const category = probeCategory(type);
+  for (let i = 0; i < probes.length; i++) {
+    await deps.testCases.create(orgId, {
+      projectId,
+      title: `${type} probe ${i + 1}`,
+      input: probes[i].input,
+      expectedOutput: probes[i].expectedOutput,
+      category,
+      now: deps.now(),
+    });
+  }
 }

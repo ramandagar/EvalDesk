@@ -26,6 +26,7 @@ import {
   handleCalibrationRecompute,
   handleRunFinalize,
   handleWebhookDeliver,
+  handleAdversarialGenerate,
   type JobHandlerDeps,
   type JudgeConfig,
 } from "./handlers";
@@ -86,6 +87,7 @@ export function buildWorkerContext(deps: WorkerContextDeps): WorkerDeps {
     "calibration.recompute": (job) => handleCalibrationRecompute(handlerDeps, job),
     "run.finalize": (job) => handleRunFinalize(handlerDeps, job),
     "webhook.deliver": (job) => handleWebhookDeliver(handlerDeps, job),
+    "adversarial.generate": (job) => handleAdversarialGenerate(handlerDeps, job),
   };
   if (deps.judge) handlers["run.judge"] = (job) => handleRunJudge(handlerDeps, job);
 
