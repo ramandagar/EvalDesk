@@ -8,6 +8,7 @@ export interface TestCase {
   title: string;
   input: string;
   expectedOutput: string | null;
+  context: string | null;
   category: string | null;
   order: number;
   createdAt: number;
@@ -20,6 +21,7 @@ export interface CreateTestCaseInput {
   input: string;
   now: number;
   expectedOutput?: string | null;
+  context?: string | null;
   category?: string | null;
   order?: number;
   id?: string;
@@ -40,6 +42,7 @@ export function testCasesRepo(db: DbHandle, schema: AppSchema) {
           title: input.title,
           input: input.input,
           expectedOutput: input.expectedOutput ?? null,
+          context: input.context ?? null,
           category: input.category ?? null,
           order: input.order ?? 0,
           createdAt: input.now,
