@@ -202,6 +202,7 @@ export async function handleRunFinalize(deps: JobHandlerDeps, job: Job): Promise
       agreementMetrics: deps.agreementMetrics,
       evalCertificates: deps.evalCertificates,
       rubrics: deps.rubrics,
+      testCases: deps.testCases,
       auditEvents: deps.auditEvents,
       signer,
       now: deps.now,

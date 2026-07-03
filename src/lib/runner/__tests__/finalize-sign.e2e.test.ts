@@ -103,6 +103,7 @@ for (const [driver, factory] of driverFactories) {
       const signer: Signer = { privateKeyPem: kp.privateKeyPem, publicKeyPem: kp.publicKeyPem, signingKeyId: "sk1" };
       const finalizeDeps = {
         ...r,
+        testCases: r.cases,
         rubrics: r.rubrics,
         signer,
         now: () => 6000,
@@ -174,6 +175,67 @@ for (const [driver, factory] of driverFactories) {
       const second = await finalizeAndSign(finalizeDeps, { orgId: org.id, runId: run.id });
       expect(second.alreadySigned).toBe(true);
       expect(second.certificateId).toBe(first.certificateId);
+    });
+
+    it("embeds HIPAA suiteCoverage in the signed certificate when test cases are tagged", async () => {
+      tdb = await factory();
+      const db = tdb!.db;
+      const schema = tdb!.schema;
+      const r2 = {
+        orgs: organizationsRepo(db, schema),
+        projects: projectsRepo(db, schema),
+        cases: testCasesRepo(db, schema),
+        runs: runsRepo(db, schema),
+        runResults: runResultsRepo(db, schema),
+        rubrics: rubricsRepo(db, schema),
+        aiScores: aiScoresRepo(db, schema),
+        humanRatings: humanRatingsRepo(db, schema),
+        adjudications: adjudicationsRepo(db, schema),
+        signoffPolicies: signoffPoliciesRepo(db, schema),
+        runSignoffs: runSignoffsRepo(db, schema),
+        agreementMetrics: agreementMetricsRepo(db, schema),
+        evalCertificates: evalCertificatesRepo(db, schema),
+      };
+
+      const org = await r2.orgs.create({ name: "H", slug: "h-hipaa", now: 1 });
+      const project = await r2.projects.create(org.id, { name: "HIPAA project", now: 1 });
+      const rubric = await r2.rubrics.getOrCreateDefault(org.id, project.id, 1);
+      const run = await r2.runs.create(org.id, { projectId: project.id, status: "completed", now: 1 });
+      await r2.signoffPolicies.create(org.id, { projectId: project.id, minReviewers: 1, now: 1 });
+
+      // Two test cases tagged with HIPAA categories
+      const categories = ["access_control", "audit_logging"];
+      const resultIds: string[] = [];
+      for (const cat of categories) {
+        const tc = await r2.cases.create(org.id, { projectId: project.id, title: `tc-${cat}`, input: "x", category: cat, now: 1 });
+        const rr = await r2.runResults.create(org.id, { runId: run.id, testCaseId: tc.id, status: "completed", agentResponse: "ok", needsHuman: true, now: 1 });
+        resultIds.push(rr.id);
+        await r2.aiScores.insertIdempotent(org.id, { runResultId: rr.id, model: "gpt-4o", label: "pass", scoreNum: 90, confidence: 0.9, rubricVersionId: rubric.id, idempotencyKey: `ai2:${rr.id}`, now: 1 });
+        await r2.humanRatings.submit(org.id, { runResultId: rr.id, reviewerId: "rev1", label: "pass", attemptId: `att2:${rr.id}`, rubricVersionId: rubric.id, now: 1 });
+      }
+
+      // Settle → adjudications
+      const settleDeps = { runs: r2.runs, runResults: r2.runResults, aiScores: r2.aiScores, humanRatings: r2.humanRatings, adjudications: r2.adjudications, rubrics: r2.rubrics, now: () => 5000 };
+      for (const id of resultIds) await reviewSettled(settleDeps, { orgId: org.id, runResultId: id });
+
+      // Sign off and finalize
+      await r2.runSignoffs.submit(org.id, { runId: run.id, reviewerId: "rev1", decision: "approve", now: 2 });
+      const kp = generateSigningKeyPair();
+      const signer: Signer = { privateKeyPem: kp.privateKeyPem, publicKeyPem: kp.publicKeyPem, signingKeyId: "sk-hipaa" };
+      const finalizeDeps2 = { ...r2, testCases: r2.cases, rubrics: r2.rubrics, signer, now: () => 6000 };
+
+      const res = await finalizeAndSign(finalizeDeps2, { orgId: org.id, runId: run.id });
+      expect(res.finalized).toBe(true);
+
+      // Certificate must verify offline
+      const row = await r2.evalCertificates.getForRun(org.id, run.id);
+      expect(verifyCertificate(bundleFromRow(row!)).valid).toBe(true);
+
+      // suiteCoverage must be embedded with HIPAA suite id and >=2 covered controls
+      const sc = (row!.payload as Record<string, unknown>).suiteCoverage as Record<string, unknown>;
+      expect(sc).toBeDefined();
+      expect(sc.suiteId).toBe("hipaa");
+      expect(Number(sc.controlsCovered)).toBeGreaterThanOrEqual(2);
     });
   });
 }

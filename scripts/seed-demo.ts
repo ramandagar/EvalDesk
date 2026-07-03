@@ -41,6 +41,7 @@ import { humanRatingsRepo } from "../src/db/repos/human-ratings";
 import { agreementMetricsRepo } from "../src/db/repos/agreement-metrics";
 import { evalCertificatesRepo } from "../src/db/repos/eval-certificates";
 import { auditEventsRepo } from "../src/db/repos/audit-events";
+import { testCasesRepo } from "../src/db/repos/test-cases";
 import { finalizeAndSign } from "../src/lib/runner/finalize-sign";
 import { resolveOrCreateSigner } from "../src/lib/crypto/signer-bootstrap";
 
@@ -345,6 +346,7 @@ async function main() {
           agreementMetrics: agreementMetricsRepo(db, schema),
           evalCertificates: evalCertificatesRepo(db, schema),
           rubrics,
+          testCases: testCasesRepo(db, schema),
           auditEvents: audit,
           signer,
           now,

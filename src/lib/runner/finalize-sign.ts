@@ -11,7 +11,9 @@
 // ============================================================================
 
 import { interReviewerKappa, type ReviewerItem } from "@/lib/moat/adjudication";
-import { buildCertificatePayload, signCertificate } from "@/lib/moat/certificate";
+import { buildCertificatePayload, signCertificate, type CertificateSuiteCoverage } from "@/lib/moat/certificate";
+import { listSuitePacks } from "@/lib/suites/packs";
+import { computeCoverage, type CoverageItem } from "@/lib/suites/manifest";
 import type { runsRepo } from "@/db/repos/runs";
 import type { runResultsRepo } from "@/db/repos/run-results";
 import type { adjudicationsRepo } from "@/db/repos/adjudications";
@@ -22,6 +24,7 @@ import type { signoffPoliciesRepo } from "@/db/repos/signoff-policies";
 import type { agreementMetricsRepo } from "@/db/repos/agreement-metrics";
 import type { evalCertificatesRepo } from "@/db/repos/eval-certificates";
 import type { rubricsRepo } from "@/db/repos/rubrics";
+import type { testCasesRepo } from "@/db/repos/test-cases";
 import type { auditEventsRepo } from "@/db/repos/audit-events";
 
 export interface Signer {
@@ -41,6 +44,7 @@ export interface FinalizeSignDeps {
   agreementMetrics: ReturnType<typeof agreementMetricsRepo>;
   evalCertificates: ReturnType<typeof evalCertificatesRepo>;
   rubrics: ReturnType<typeof rubricsRepo>;
+  testCases: ReturnType<typeof testCasesRepo>;
   /** Optional: when present, finalize + certificate issuance are recorded in the audit hash chain. */
   auditEvents?: ReturnType<typeof auditEventsRepo>;
   signer: Signer;
@@ -126,6 +130,34 @@ export async function finalizeAndSign(deps: FinalizeSignDeps, args: { orgId: str
 
   const reviewers = [...new Set(approvals.map((s) => s.reviewerId))].map((reviewerId) => ({ reviewerId, role: policy?.requiredRole ?? "reviewer" }));
 
+  // Auto-detect which compliance suite applies from test-case categories.
+  // Pick the pack with the most covered controls (≥1); omit if none match.
+  const cases = await deps.testCases.listForProject(orgId, run.projectId);
+  const caseCat = new Map(cases.map((c) => [c.id, c.category]));
+  const coverageItems: CoverageItem[] = [];
+  for (const r of results) {
+    const cat = caseCat.get(r.testCaseId);
+    if (!cat) continue;
+    const a = adjByResult.get(r.id);
+    const label = a?.finalLabel ?? aiForRun.find((s) => s.runResultId === r.id)?.label ?? "partial";
+    coverageItems.push({ category: cat, finalLabel: label });
+  }
+  let suiteCoverage: CertificateSuiteCoverage | undefined;
+  for (const pack of listSuitePacks()) {
+    const c = computeCoverage(pack, coverageItems);
+    if (c.controlsCovered > 0 && (!suiteCoverage || c.controlsCovered > suiteCoverage.controlsCovered)) {
+      suiteCoverage = {
+        suiteId: c.suiteId,
+        version: c.version,
+        regulation: pack.regulation,
+        compliant: c.compliant,
+        controlsCovered: c.controlsCovered,
+        controlsTotal: c.controlsTotal,
+        controls: c.controls.map((x) => ({ id: x.id, status: x.status, passRate: x.passRate })),
+      };
+    }
+  }
+
   const now = deps.now();
   const payload = buildCertificatePayload({
     orgId,
@@ -140,6 +172,7 @@ export async function finalizeAndSign(deps: FinalizeSignDeps, args: { orgId: str
     reviewers,
     verdicts,
     signoffPolicy: { minReviewers, requiredRole: policy?.requiredRole ?? undefined },
+    suiteCoverage,
     signedAt: now,
   });
 
