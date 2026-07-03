@@ -10,6 +10,7 @@
 import { createHash } from "node:crypto";
 import type { Provider } from "@/lib/ai/provider";
 import { runEnsemble, type JudgeSpec } from "@/lib/ai/judge-ensemble";
+import { buildFaithfulnessPrompt, parseFaithfulnessResponse } from "@/lib/ai/rag-eval";
 import type { testCasesRepo } from "@/db/repos/test-cases";
 import type { runsRepo } from "@/db/repos/runs";
 import type { runResultsRepo } from "@/db/repos/run-results";
@@ -121,6 +122,30 @@ export async function judgeRun(deps: JudgeRunDeps, args: JudgeRunArgs): Promise<
         rubricVersionId: rubric.id,
         promptHash,
         idempotencyKey,
+        now: deps.now(),
+      });
+    }
+
+    // RAG faithfulness: if the test case has source context, check grounding.
+    if (tc?.context) {
+      const fPrompt = buildFaithfulnessPrompt(tc.context, r.agentResponse ?? "");
+      const fResult = await deps.provider.complete({
+        model: ensemble.perSpec[0]?.model ?? "gpt-4o-mini",
+        messages: [{ role: "user", content: fPrompt }],
+        temperature: 0,
+        maxTokens: 300,
+      });
+      const f = parseFaithfulnessResponse(fResult.text);
+      await deps.aiScores.insertIdempotent(orgId, {
+        runResultId: r.id,
+        model: ensemble.perSpec[0]?.model ?? "gpt-4o-mini",
+        label: f.rating,
+        scoreNum: f.score,
+        confidence: null,
+        rubricVersionId: rubric.id,
+        promptHash: `rag:${createHash("sha256").update(fPrompt).digest("hex").slice(0, 16)}`,
+        rationale: f.reasoning,
+        idempotencyKey: `rag:${r.id}`,
         now: deps.now(),
       });
     }
