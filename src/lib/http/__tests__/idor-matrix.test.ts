@@ -34,6 +34,7 @@ import {
   handleGetCalibration,
   handleRunReport,
   handleExportReport,
+  handleRunCoverage,
 } from "@/lib/http/review-handler";
 import { handleMe } from "@/lib/http/me-handler";
 import { handleListWebhooks, handleCreateWebhook } from "@/lib/http/webhooks-handler";
@@ -121,6 +122,7 @@ function endpoints() {
     { name: "GET /runs/:id/certificate", run: (t?: string, o?: string) => handleGetCertificate(mk(t, o), c, runId) },
     { name: "GET /runs/:id/results", run: (t?: string, o?: string) => handleRunReport(mk(t, o), c, runId) },
     { name: "GET /runs/:id/report", run: (t?: string, o?: string) => handleExportReport(mk(t, o), c, runId) },
+    { name: "GET /runs/:id/coverage", run: (t?: string, o?: string) => handleRunCoverage(mk(t, o, undefined, "?suite=hipaa"), c, runId) },
     { name: "GET /results/:id", run: (t?: string, o?: string) => handleGetReviewItem(mk(t, o), c, resultId) },
     { name: "POST /results/:id/verdicts", run: (t?: string, o?: string) => handleSubmitVerdict(mk(t, o, { label: "pass", attemptId: "a1" }), c, resultId) },
     { name: "GET /projects/:id/calibration", run: (t?: string, o?: string) => handleGetCalibration(mk(t, o), c, projectId) },
@@ -190,6 +192,7 @@ describe("route coverage meta-test", () => {
       "runs/[id]/certificate/route.ts",
       "runs/[id]/results/route.ts",
       "runs/[id]/report/route.ts",
+      "runs/[id]/coverage/route.ts",
       "members/route.ts",
       "members/[userId]/route.ts",
       "analytics/route.ts",

@@ -13,6 +13,8 @@
 import type { guard } from "@/lib/auth/guard";
 import { AuthzError } from "@/lib/auth/guard";
 import { reviewSettled, type ReviewSettledDeps } from "@/lib/runner/review-settled";
+import { getSuitePack } from "@/lib/suites/packs";
+import { computeCoverage, type CoverageItem } from "@/lib/suites/manifest";
 import type { runsRepo } from "@/db/repos/runs";
 import type { runResultsRepo } from "@/db/repos/run-results";
 import type { testCasesRepo } from "@/db/repos/test-cases";
@@ -289,6 +291,32 @@ export function reviewService(deps: ReviewServiceDeps) {
         rows,
         changedCount: rows.filter((r) => r.changed).length,
       };
+    },
+
+    /** Control-coverage matrix for a run against a compliance suite (e.g. hipaa). */
+    async runCoverage(token: string | undefined, orgId: string, runId: string, suiteId: string) {
+      await deps.guard.requireMember(token, orgId, "run:read");
+      const pack = getSuitePack(suiteId);
+      if (!pack) throw new AuthzError(404, "Unknown compliance suite");
+      const run = await deps.runs.getInOrg(orgId, runId);
+      if (!run) throw new AuthzError(404, "Not found");
+
+      const results = await deps.runResults.listForRun(orgId, runId);
+      const ids = results.map((r) => r.id);
+      const cases = await deps.testCases.listForProject(orgId, run.projectId);
+      const categoryByCase = new Map(cases.map((c) => [c.id, c.category]));
+      const adjs = await deps.adjudications.listForResults(orgId, ids);
+      const adjBy = new Map(adjs.map((a) => [a.runResultId, a.finalLabel]));
+      const aiBy = groupBy(await deps.aiScores.listForResults(orgId, ids), (s) => s.runResultId);
+
+      const items: CoverageItem[] = [];
+      for (const r of results) {
+        const category = categoryByCase.get(r.testCaseId);
+        if (!category) continue; // untagged results don't map to any control
+        const label = adjBy.get(r.id) ?? aiBy.get(r.id)?.[0]?.label ?? null;
+        items.push({ category, finalLabel: label ?? "partial" });
+      }
+      return { suite: pack, coverage: computeCoverage(pack, items) };
     },
 
     /** The project's latest AI-vs-human calibration + inter-rater agreement (for the panels). */

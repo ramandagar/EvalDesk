@@ -144,6 +144,20 @@ export async function handleCompare(req: Request, c: Container): Promise<Respons
   }
 }
 
+/** GET /runs/:id/coverage?suite=hipaa — control-coverage matrix against a compliance suite. */
+export async function handleRunCoverage(req: Request, c: Container, runId: string): Promise<Response> {
+  try {
+    const o = org(req);
+    if (o instanceof Response) return o;
+    const suiteId = new URL(req.url).searchParams.get("suite");
+    if (!suiteId) return json({ error: "?suite= is required (e.g. hipaa)" }, 400);
+    const result = await c.review.runCoverage(getSessionToken(req), o.orgId, runId, suiteId);
+    return json(result);
+  } catch (e) {
+    return errorResponse(e);
+  }
+}
+
 /** GET /runs/:id/results — full per-result report (agent answer + scores + verdicts). */
 export async function handleRunReport(req: Request, c: Container, runId: string): Promise<Response> {
   try {
