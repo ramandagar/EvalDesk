@@ -182,6 +182,8 @@ export const tables = [
       test_case_id: { kind: "fk", ref: "test_cases.id", onDelete: "cascade", nullable: false },
       agent_response: { kind: "text", nullable: true }, // agent output ONLY; ratings/scores are separate layers
       response_time_ms: { kind: "int", nullable: true },
+      tokens_in: { kind: "int", nullable: true },
+      tokens_out: { kind: "int", nullable: true },
       status: { kind: "text", nullable: false, default: "pending" }, // pending|completed|error|timeout
       error_message: { kind: "text", nullable: true },
       needs_human: { kind: "bool", nullable: false, default: false },

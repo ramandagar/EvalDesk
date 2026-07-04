@@ -78,6 +78,13 @@
       "when": 1783095209551,
       "tag": "0010_funny_wallow",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1783098070906,
+      "tag": "0011_normal_black_cat",
+      "breakpoints": true
     }
   ]
 }

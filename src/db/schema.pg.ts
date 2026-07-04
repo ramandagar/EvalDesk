@@ -136,6 +136,8 @@ export const runResults = pgTable("run_results", {
   testCaseId: text("test_case_id").references(() => testCases.id, { onDelete: "cascade" }).notNull(),
   agentResponse: text("agent_response"),
   responseTimeMs: integer("response_time_ms"),
+  tokensIn: integer("tokens_in"),
+  tokensOut: integer("tokens_out"),
   status: text("status").notNull().default("pending"),
   errorMessage: text("error_message"),
   needsHuman: boolean("needs_human").notNull().default(false),

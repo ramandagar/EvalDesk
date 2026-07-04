@@ -8,6 +8,8 @@ export interface RunResult {
   testCaseId: string;
   agentResponse: string | null;
   responseTimeMs: number | null;
+  tokensIn: number | null;
+  tokensOut: number | null;
   status: string;
   errorMessage: string | null;
   needsHuman: boolean;
@@ -20,6 +22,8 @@ export interface CreateRunResultInput {
   now: number;
   agentResponse?: string | null;
   responseTimeMs?: number | null;
+  tokensIn?: number | null;
+  tokensOut?: number | null;
   status?: string;
   errorMessage?: string | null;
   needsHuman?: boolean;
@@ -40,6 +44,8 @@ export function runResultsRepo(db: DbHandle, schema: AppSchema) {
           testCaseId: input.testCaseId,
           agentResponse: input.agentResponse ?? null,
           responseTimeMs: input.responseTimeMs ?? null,
+          tokensIn: input.tokensIn ?? null,
+          tokensOut: input.tokensOut ?? null,
           status: input.status ?? "pending",
           errorMessage: input.errorMessage ?? null,
           needsHuman: input.needsHuman ?? false,
