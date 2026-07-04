@@ -1,15 +1,5 @@
-"""EvalDesk SDK for Python — AI agent evaluation toolkit."""
+from .client import EvalDesk, assert_run_passes
+from .exceptions import EvalDeskError
+from .types import Project, Run, TestCase
 
-__version__ = "0.1.0"
-
-from .client import EvalDeskClient
-from .models import Project, TestCase, Run, RunResult, EvaluationResult
-
-__all__ = [
-    "EvalDeskClient",
-    "Project",
-    "TestCase",
-    "Run",
-    "RunResult",
-    "EvaluationResult",
-]
+__all__ = ["EvalDesk", "assert_run_passes", "EvalDeskError", "Project", "Run", "TestCase"]

@@ -1,186 +1,248 @@
-"""HTTP client for the EvalDesk API."""
-
-import json
-from typing import Optional, List, Dict, Any
+import time
+from typing import Optional, List
 
 import requests
 
-from .models import Project, TestCase, Run, RunResult, EvaluationResult
+from .exceptions import EvalDeskError
+from .types import Project, Run, TestCase
+
+TERMINAL_STATUSES = {"completed", "failed", "signed"}
 
 
-class EvalDeskClient:
-    """Client for interacting with the EvalDesk API.
+class EvalDesk:
+    """Client for the EvalDesk REST API.
 
     Args:
-        base_url: Base URL of the EvalDesk instance (e.g., "http://localhost:3000").
-        api_key: API key for authentication.
+        base_url: Root URL of the EvalDesk instance (e.g. "https://app.evaldesk.dev").
+        token: Session token obtained from the web app or the /auth/login endpoint.
+        org: Organisation ID (X-Org-Id header value).
     """
 
-    def __init__(self, base_url: str, api_key: str):
+    def __init__(self, base_url: str, token: str, org: str):
         self.base_url = base_url.rstrip("/")
-        self.api_key = api_key
+        self.org = org
         self._session = requests.Session()
         self._session.headers.update({
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
+            "x-org-id": org,
+            "cookie": f"evaldesk_session={token}",
+            "content-type": "application/json",
         })
 
-    def _url(self, path: str) -> str:
-        return f"{self.base_url}{path}"
+    # ── Internal helpers ─────────────────────────────────
 
-    def _get(self, path: str, params: Optional[Dict[str, Any]] = None) -> Any:
-        resp = self._session.get(self._url(path), params=params)
-        resp.raise_for_status()
-        return resp.json()
+    def _get(self, path: str) -> dict:
+        r = self._session.get(f"{self.base_url}/api/v1{path}")
+        if not r.ok:
+            raise EvalDeskError(r.status_code, r.json().get("error", f"HTTP {r.status_code}"))
+        return r.json()
 
-    def _post(self, path: str, data: Optional[Dict[str, Any]] = None) -> Any:
-        resp = self._session.post(self._url(path), json=data)
-        resp.raise_for_status()
-        return resp.json()
+    def _post(self, path: str, body: Optional[dict] = None) -> dict:
+        r = self._session.post(f"{self.base_url}/api/v1{path}", json=body or {})
+        if not r.ok:
+            raise EvalDeskError(r.status_code, r.json().get("error", f"HTTP {r.status_code}"))
+        return r.json()
 
-    # ── Projects ──────────────────────────────────────────
+    # ── Identity ─────────────────────────────────────────
 
-    def create_project(
+    def me(self) -> dict:
+        """Return the current user + org membership info."""
+        return self._get("/me")
+
+    # ── Projects ─────────────────────────────────────────
+
+    @property
+    def projects(self) -> "_Projects":
+        return _Projects(self)
+
+    # ── Test cases ───────────────────────────────────────
+
+    @property
+    def test_cases(self) -> "_TestCases":
+        return _TestCases(self)
+
+    # ── Runs ─────────────────────────────────────────────
+
+    @property
+    def runs(self) -> "_Runs":
+        return _Runs(self)
+
+    # ── Certificates ─────────────────────────────────────
+
+    def get_certificate(self, run_id: str) -> dict:
+        """Fetch the Ed25519-signed compliance certificate for a finalised run."""
+        return self._get(f"/runs/{run_id}/certificate").get("certificate")
+
+
+# ── Sub-resource namespaces ───────────────────────────────────────────────────
+
+
+class _Projects:
+    def __init__(self, client: EvalDesk):
+        self._c = client
+
+    def list(self) -> List[Project]:
+        """List all projects in the org."""
+        return self._c._get("/projects")["projects"]
+
+    def get(self, project_id: str) -> Project:
+        """Fetch a single project by ID."""
+        return self._c._get(f"/projects/{project_id}")["project"]
+
+    def create(
         self,
         name: str,
-        description: Optional[str] = None,
         agent_endpoint: Optional[str] = None,
         agent_api_key: Optional[str] = None,
-        default_model: str = "gpt-4o-mini",
+        judge_base_url: Optional[str] = None,
+        judge_model: Optional[str] = None,
+        judge_api_key: Optional[str] = None,
     ) -> Project:
-        """Create a new evaluation project."""
-        data: Dict[str, Any] = {
-            "name": name,
-            "defaultModel": default_model,
-        }
-        if description:
-            data["description"] = description
+        """Create a new project, optionally with an agent endpoint and judge config."""
+        body: dict = {"name": name}
         if agent_endpoint:
-            data["agentEndpoint"] = agent_endpoint
+            body["agentEndpoint"] = agent_endpoint
         if agent_api_key:
-            data["agentApiKey"] = agent_api_key
+            body["agentApiKey"] = agent_api_key
+        if judge_base_url:
+            body["judgeBaseUrl"] = judge_base_url
+        if judge_model:
+            body["judgeModel"] = judge_model
+        if judge_api_key:
+            body["judgeApiKey"] = judge_api_key
+        return self._c._post("/projects", body)["project"]
 
-        result = self._post("/api/projects", data)
-        return Project.from_dict(result)
 
-    def list_projects(self) -> List[Project]:
-        """List all projects."""
-        results = self._get("/api/projects")
-        if isinstance(results, list):
-            return [Project.from_dict(p) for p in results]
-        return [Project.from_dict(p) for p in results.get("projects", [])]
+class _TestCases:
+    def __init__(self, client: EvalDesk):
+        self._c = client
 
-    def get_project(self, project_id: str) -> Project:
-        """Get a project by ID."""
-        result = self._get(f"/api/projects/{project_id}")
-        return Project.from_dict(result)
+    def list(self, project_id: str) -> List[TestCase]:
+        """List all test cases in a project."""
+        return self._c._get(f"/test-cases?projectId={project_id}")["testCases"]
 
-    # ── Test Cases ────────────────────────────────────────
-
-    def create_test_case(
+    def create(
         self,
         project_id: str,
         title: str,
         input: str,
         expected_output: Optional[str] = None,
+        context: Optional[str] = None,
         category: Optional[str] = None,
-        tags: Optional[List[str]] = None,
     ) -> TestCase:
-        """Create a test case within a project."""
-        data: Dict[str, Any] = {
-            "projectId": project_id,
-            "title": title,
-            "input": input,
-        }
+        """Create a single test case. Set *context* for RAG faithfulness eval."""
+        body: dict = {"projectId": project_id, "title": title, "input": input}
         if expected_output:
-            data["expectedOutput"] = expected_output
+            body["expectedOutput"] = expected_output
+        if context:
+            body["context"] = context
         if category:
-            data["category"] = category
-        if tags:
-            data["tags"] = json.dumps(tags)
+            body["category"] = category
+        return self._c._post("/test-cases", body)["testCase"]
 
-        result = self._post("/api/test-cases", data)
-        return TestCase.from_dict(result)
+    def import_dataset(self, project_id: str, data: str) -> dict:
+        """Bulk-import a deepeval/langfuse/openai-evals dataset (JSONL or JSON string)."""
+        return self._c._post("/imports", {"projectId": project_id, "data": data})["result"]
 
-    def list_test_cases(self, project_id: str) -> List[TestCase]:
-        """List test cases for a project."""
-        results = self._get("/api/test-cases", params={"projectId": project_id})
-        return [TestCase.from_dict(tc) for tc in results]
-
-    # ── Runs ──────────────────────────────────────────────
-
-    def run_evaluation(
+    def generate_probes(
         self,
         project_id: str,
-        name: Optional[str] = None,
-        model: Optional[str] = None,
-    ) -> Run:
-        """Trigger an evaluation run for a project."""
-        data: Dict[str, Any] = {"projectId": project_id}
-        if name:
-            data["name"] = name
-        if model:
-            data["model"] = model
+        probe_type: str = "jailbreak",
+        count: int = 5,
+    ) -> dict:
+        """Enqueue adversarial probe generation (jailbreak | prompt_injection | pii_leak).
 
-        result = self._post("/api/run", data)
-        return Run.from_dict(result)
-
-    def list_runs(self, project_id: Optional[str] = None, limit: int = 10) -> List[Run]:
-        """List runs, optionally filtered by project."""
-        params: Dict[str, Any] = {"limit": str(limit)}
-        if project_id:
-            params["projectId"] = project_id
-        results = self._get("/api/runs", params=params)
-        return [Run.from_dict(r) for r in results]
-
-    def get_run(self, run_id: str) -> Run:
-        """Get a run by ID."""
-        results = self._get("/api/runs")
-        for r in results:
-            if r.get("id") == run_id:
-                return Run.from_dict(r)
-        raise ValueError(f"Run {run_id} not found")
-
-    # ── Results ───────────────────────────────────────────
-
-    def get_results(self, run_id: str) -> EvaluationResult:
-        """Get full results for a run, including individual test case results."""
-        run_data = self._get(f"/api/run/{run_id}/results")
-        run = Run.from_dict(run_data.get("run", run_data))
-
-        results_list = run_data.get("results", [])
-        if isinstance(results_list, list):
-            results = [RunResult.from_dict(r) for r in results_list]
-        else:
-            results = []
-
-        return EvaluationResult(
-            run=run,
-            results=results,
-            pass_rate=run.pass_rate,
-            total_cost=run.total_cost,
+        Returns immediately with ``{"queued": True}``; probes appear as test cases
+        once the worker finishes (typically < 30 s).
+        """
+        return self._c._post(
+            f"/projects/{project_id}/probes",
+            {"type": probe_type, "count": count},
         )
 
-    # ── Analytics ─────────────────────────────────────────
 
-    def get_model_comparison(self, project_id: Optional[str] = None) -> Dict[str, Any]:
-        """Get model comparison data."""
-        params = {}
-        if project_id:
-            params["projectId"] = project_id
-        return self._get("/api/models/compare", params=params)
+class _Runs:
+    def __init__(self, client: EvalDesk):
+        self._c = client
 
-    def get_executive_summary(self) -> Dict[str, Any]:
-        """Get executive dashboard data."""
-        return self._get("/api/executive")
+    def create(self, project_id: str) -> Run:
+        """Trigger a new evaluation run for a project."""
+        return self._c._post("/runs", {"projectId": project_id})["run"]
 
-    def get_cost_tracking(
+    def get(self, run_id: str) -> Run:
+        """Fetch a run by ID."""
+        return self._c._get(f"/runs/{run_id}")["run"]
+
+    def list(self, project_id: Optional[str] = None) -> List[Run]:
+        """List runs — optionally scoped to a project."""
+        path = f"/runs?projectId={project_id}" if project_id else "/runs"
+        return self._c._get(path)["runs"]
+
+    def report(self, run_id: str) -> dict:
+        """Full per-result report including AI scores, human ratings, tokens, and cost."""
+        return self._c._get(f"/runs/{run_id}/results")
+
+    def coverage(self, run_id: str, suite: str = "hipaa") -> dict:
+        """Compliance control-coverage matrix for a run (HIPAA or EU-AI-Act)."""
+        return self._c._get(f"/runs/{run_id}/coverage?suite={suite}")
+
+    def signoff(self, run_id: str, decision: str = "approve") -> dict:
+        """Submit a human sign-off decision (approve | reject)."""
+        return self._c._post(f"/runs/{run_id}/signoff", {"decision": decision})
+
+    def wait(
         self,
-        project_id: Optional[str] = None,
-        period: str = "30d",
-    ) -> Dict[str, Any]:
-        """Get cost tracking data."""
-        params: Dict[str, Any] = {"period": period}
-        if project_id:
-            params["projectId"] = project_id
-        return self._get("/api/costs", params=params)
+        run_id: str,
+        timeout: int = 300,
+        poll_interval: float = 2.5,
+    ) -> Run:
+        """Poll until the run reaches a terminal status, then return it.
+
+        Raises:
+            EvalDeskError: If the run does not finish within *timeout* seconds.
+        """
+        start = time.monotonic()
+        while True:
+            run = self.get(run_id)
+            if run["status"] in TERMINAL_STATUSES:
+                return run
+            if time.monotonic() - start > timeout:
+                raise EvalDeskError(
+                    408,
+                    f"Run {run_id} did not finish within {timeout}s",
+                )
+            time.sleep(poll_interval)
+
+
+# ── CI gate ───────────────────────────────────────────────────────────────────
+
+
+def assert_run_passes(
+    run: Run,
+    min_pass_rate: Optional[float] = None,
+    max_failures: Optional[int] = None,
+) -> None:
+    """DeepEval-parity CI gate.  Raises :class:`EvalDeskError` if the run misses the bar.
+
+    Args:
+        run: A :class:`~evaldesk.types.Run` dict (from ``runs.get()`` or ``runs.wait()``).
+        min_pass_rate: Minimum acceptable pass rate in [0, 1].  e.g. ``0.9`` = 90 %.
+        max_failures: Maximum number of ``"fail"`` verdicts allowed.
+
+    Example::
+
+        run = client.runs.wait(run["id"])
+        assert_run_passes(run, min_pass_rate=0.95, max_failures=0)
+    """
+    decided = run["passCount"] + run["failCount"] + run["partialCount"]
+    pass_rate = run["passCount"] / decided if decided > 0 else 0.0
+
+    if min_pass_rate is not None and pass_rate < min_pass_rate:
+        raise EvalDeskError(
+            422,
+            f"pass rate {pass_rate:.1%} is below the required {min_pass_rate:.1%}",
+        )
+    if max_failures is not None and run["failCount"] > max_failures:
+        raise EvalDeskError(
+            422,
+            f"{run['failCount']} failures exceeds the allowed {max_failures}",
+        )

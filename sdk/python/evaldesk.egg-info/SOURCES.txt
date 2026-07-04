@@ -1,0 +1,13 @@
+pyproject.toml
+evaldesk/__init__.py
+evaldesk/client.py
+evaldesk/evaluator.py
+evaldesk/exceptions.py
+evaldesk/models.py
+evaldesk/types.py
+evaldesk.egg-info/PKG-INFO
+evaldesk.egg-info/SOURCES.txt
+evaldesk.egg-info/dependency_links.txt
+evaldesk.egg-info/requires.txt
+evaldesk.egg-info/top_level.txt
+tests/test_client.py
