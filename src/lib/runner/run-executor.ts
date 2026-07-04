@@ -47,6 +47,8 @@ export async function executeRun(deps: ExecutorDeps, args: ExecuteRunArgs): Prom
       testCaseId: tc.id,
       agentResponse: result.response,
       responseTimeMs: result.timeMs,
+      tokensIn: result.tokensIn ?? null,
+      tokensOut: result.tokensOut ?? null,
       status: result.error ? "error" : "completed",
       errorMessage: result.error ?? null,
       // every fresh result starts unrated → needs a human (or judge) verdict

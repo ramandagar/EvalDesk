@@ -22,6 +22,8 @@ export interface AgentCallResult {
   response: string | null;
   error?: string;
   timeMs: number;
+  tokensIn?: number;
+  tokensOut?: number;
 }
 
 export interface RunnerDeps {
@@ -104,7 +106,11 @@ export async function callAgent(
     }
 
     const data = await res.json().catch(() => null);
-    return { response: pickContent(data), timeMs };
+    // Extract token usage if the agent returns it (OpenAI-shaped responses).
+    const usage = (data as Record<string, any>)?.usage;
+    const tokensIn: number | undefined = typeof usage?.prompt_tokens === "number" ? usage.prompt_tokens : undefined;
+    const tokensOut: number | undefined = typeof usage?.completion_tokens === "number" ? usage.completion_tokens : undefined;
+    return { response: pickContent(data), timeMs, tokensIn, tokensOut };
   } catch (e) {
     return {
       response: null,
