@@ -9,12 +9,12 @@ import { NextRequest, NextResponse } from "next/server";
 const SESSION_COOKIE = "evaldesk_session";
 
 // Exact public paths.
-const publicPaths = new Set(["/", "/login", "/forgot", "/reset", "/pricing", "/about", "/changelog", "/contact", "/terms", "/privacy", "/blog", "/api/health"]);
+const publicPaths = new Set(["/", "/login", "/forgot", "/reset", "/pricing", "/about", "/changelog", "/contact", "/terms", "/privacy", "/blog", "/api/health", "/demo"]);
 
 // Public prefixes: marketing/docs/blog, the public certificate + embed pages,
 // the health probe, the auth endpoints, and the whole versioned API (which
 // self-guards in-route).
-const publicPrefixes = ["/blog/", "/docs", "/certificate/", "/embed/", "/api/health", "/api/auth/", "/api/v1/"];
+const publicPrefixes = ["/blog/", "/docs", "/certificate/", "/embed/", "/api/health", "/api/auth/", "/api/v1/", "/api/demo"];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

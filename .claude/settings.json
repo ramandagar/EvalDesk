@@ -61,7 +61,17 @@
       "Bash(git ls-tree *)",
       "Bash(mkdir -p \"src/app/api/v1/runs/[id]/results\")",
       "Bash(mkdir -p \"src/app/api/v1/members/[userId]\")",
-      "Bash(mkdir -p \"src/app/api/v1/runs/[id]/report\")"
+      "Bash(mkdir -p \"src/app/api/v1/runs/[id]/report\")",
+      "Bash(git config *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\);console.log\\('name:',p.name,'| version:',p.version,'| license:',p.license||'\\(unset\\)'\\)\")",
+      "Bash(node -e \"const fs=require\\('fs'\\);const p=JSON.parse\\(fs.readFileSync\\('package.json','utf8'\\)\\);p.license='MIT';fs.writeFileSync\\('package.json',JSON.stringify\\(p,null,2\\)+'\\\\n'\\);console.log\\('✓ set package.json license: MIT'\\)\")",
+      "Bash(git check-ignore *)",
+      "Bash(set -e)",
+      "Bash(git commit -q -m 'fix\\(db\\): lazy-load native drivers, mark as server-external *)",
+      "Bash(git commit -q -m 'feat\\(log\\): structured JSON logger *)",
+      "Bash(git commit *)",
+      "Bash(awk '{print $1}')",
+      "Bash(node -e \"const d=require\\('./package.json'\\).dependencies||{}; console.log\\('pg:', d.pg||'MISSING'\\); console.log\\('better-sqlite3:', d['better-sqlite3']||'MISSING'\\); console.log\\('drizzle-orm:', d['drizzle-orm']||'MISSING'\\); console.log\\('pg-native/neo4j? n/a'\\)\")"
     ],
     "additionalDirectories": [
       "/Users/raman/Downloads/EvalDesk/src/app/(dashboard)/runs/[id]"

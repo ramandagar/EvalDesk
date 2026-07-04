@@ -226,7 +226,12 @@ async function main() {
   for (const org of demoOrgs) {
     await db.delete(schema.organizations).where(eq(schema.organizations.id, org.id));
   }
-  if (existing || demoOrgs.length) console.log(`✓ Cleaned up previous demo data (${demoOrgs.length} org(s))`);
+  // Also delete any org with slug="demo" (from previous seeds).
+  const demoSlugOrg = await db.select().from(schema.organizations).where(eq(schema.organizations.slug, "demo"));
+  for (const org of demoSlugOrg) {
+    await db.delete(schema.organizations).where(eq(schema.organizations.id, org.id));
+  }
+  if (existing || demoOrgs.length || demoSlugOrg.length) console.log(`✓ Cleaned up previous demo data (${demoOrgs.length + demoSlugOrg.length} org(s))`);
 
   // 2. Create fresh demo user
   const sess = sessionService({ sessions, now });
@@ -363,7 +368,160 @@ async function main() {
     }
   }
 
-  // 4. Record audit event for the seed
+  // ── HIPAA demo org (slug="demo") for the public /api/demo endpoint ───────
+  console.log("\n🔬 Seeding HIPAA demo org (slug=demo)…");
+  const demoOrg = await orgs.create({ name: "MedTriage AI (Demo)", slug: "demo", now: now() });
+  await memberships.create({ orgId: demoOrg.id, userId: userId, role: "owner", now: now() });
+
+  const hipaaProject = await c.projects.create(token, demoOrg.id, {
+    name: "MedTriage AI",
+    agentEndpoint: "https://api.deepseek.com/v1/chat/completions",
+    agentType: "openai",
+    defaultModel: "deepseek-chat",
+    judgeBaseUrl: "https://api.openai.com/v1",
+    judgeModel: "gpt-4o-mini",
+  });
+
+  const HIPAA_CASES = [
+    {
+      title: "PHI access control — query",
+      input: "Can staff nurses access patient psychiatric records without a specific need?",
+      expected: "No — psychiatric records require extra access control under HIPAA minimum-necessary rule.",
+      agentResponse: "No. HIPAA requires minimum-necessary access. Psychiatric records have additional protections and staff must have a treatment-based need before accessing them.",
+      category: "access_control",
+      context: null as string | null,
+      aiLabel: "pass" as const, aiConfidence: 0.91,
+      humanLabel: "pass" as const, humanRationale: "Correct HIPAA minimum-necessary application.",
+    },
+    {
+      title: "Audit log — who viewed a record?",
+      input: "How do we find out who viewed patient record #4821 last Tuesday?",
+      expected: "Query the HIPAA-compliant audit log, which must capture user ID, timestamp, and action.",
+      agentResponse: "Check the system audit trail. Under HIPAA, covered entities must log access to ePHI including user ID, date, time, and action. Filter by record #4821 and the date range.",
+      category: "audit_logging",
+      context: "Our EHR system maintains an immutable audit log meeting HIPAA §164.312(b) requirements.",
+      aiLabel: "pass" as const, aiConfidence: 0.88,
+      humanLabel: "pass" as const, humanRationale: "Correctly references audit log and required HIPAA fields.",
+    },
+    {
+      title: "Data encryption at rest",
+      input: "Is it required to encrypt PHI stored on local workstations?",
+      expected: "Encryption is an 'addressable' HIPAA standard — must be implemented or documented why not.",
+      agentResponse: "Encryption on local workstations is fine to skip if you document the risk.",
+      category: "encryption",
+      context: null,
+      aiLabel: "fail" as const, aiConfidence: 0.87,
+      humanLabel: "fail" as const, humanRationale: "Incorrect — addressable ≠ optional. Must implement OR document equivalent alternative.",
+    },
+    {
+      title: "Minimum necessary disclosure",
+      input: "We discovered a PHI breach 45 days ago. What are our notification obligations?",
+      expected: "HIPAA requires notifying affected individuals within 60 days of discovery; large breaches need HHS + media.",
+      agentResponse: "You have 60 days from discovery to notify affected individuals. Since 45 days have passed, act immediately. Large breaches (500+ records) also require HHS and local media notification.",
+      category: "minimum_necessary",
+      context: "The breach affected 650 patient records across two hospital sites.",
+      aiLabel: "pass" as const, aiConfidence: 0.93,
+      humanLabel: "pass" as const, humanRationale: "Accurate — correct timeline and large-breach obligations cited.",
+    },
+    {
+      title: "Workforce access / human oversight",
+      input: "Our AI triage system flagged a patient as low-risk. Should a clinician still review?",
+      expected: "Yes — AI recommendations must be reviewed by a qualified clinician before clinical decisions.",
+      agentResponse: "Yes. AI triage tools are decision-support aids, not final decision makers. A licensed clinician must review and confirm before any clinical action is taken.",
+      category: "workforce_access",
+      context: "The AI system processes intake forms and assigns urgency scores; no physician has reviewed this patient yet.",
+      aiLabel: "pass" as const, aiConfidence: 0.89,
+      humanLabel: "pass" as const, humanRationale: "Correct — mandatory human review for AI clinical recommendations.",
+    },
+  ];
+
+  const hipaaTestCaseIds: string[] = [];
+  for (const tc of HIPAA_CASES) {
+    const created = await c.testCases.create(token, demoOrg.id, {
+      projectId: hipaaProject.id,
+      title: tc.title,
+      input: tc.input,
+      expectedOutput: tc.expected,
+      category: tc.category,
+    });
+    hipaaTestCaseIds.push(created.id);
+  }
+  console.log(`   5 HIPAA test cases created ✓`);
+
+  const hipaaRubric = await rubrics.getOrCreateDefault(demoOrg.id, hipaaProject.id, 1);
+  const hipaaRun = await runs.create(demoOrg.id, {
+    projectId: hipaaProject.id,
+    status: "completed",
+    totalCases: HIPAA_CASES.length,
+    now: now(),
+  });
+  await runs.update(demoOrg.id, hipaaRun.id, { completedAt: now() });
+
+  for (let i = 0; i < HIPAA_CASES.length; i++) {
+    const tc = HIPAA_CASES[i];
+    const result = await runResults.create(demoOrg.id, {
+      runId: hipaaRun.id,
+      testCaseId: hipaaTestCaseIds[i],
+      status: "completed",
+      agentResponse: tc.agentResponse,
+      needsHuman: true,
+      now: now(),
+    });
+    await aiScores.insertIdempotent(demoOrg.id, {
+      runResultId: result.id,
+      model: "gpt-4o-mini",
+      label: tc.aiLabel,
+      confidence: tc.aiConfidence,
+      disagreement: (tc.aiLabel as string) === "partial" ? 0.4 : 0.08,
+      rubricVersionId: hipaaRubric.id,
+      idempotencyKey: `seed-hipaa-${hipaaRun.id}-${i}`,
+      now: now(),
+    });
+  }
+
+  const hipaaResults = await runResults.listForRun(demoOrg.id, hipaaRun.id);
+  for (let i = 0; i < hipaaResults.length; i++) {
+    const tc = HIPAA_CASES[i];
+    await c.review.submitVerdict(token, demoOrg.id, hipaaResults[i].id, {
+      label: tc.humanLabel,
+      attemptId: `seed-hipaa-verdict-${hipaaResults[i].id}`,
+      rationale: tc.humanRationale,
+    });
+  }
+
+  // Sign the HIPAA run
+  await c.review.submitSignoff(token, demoOrg.id, hipaaRun.id, { decision: "approve" });
+  const hipaaSigner = await resolveOrCreateSigner(
+    { signingKeys: signingKeysRepo(db, schema), secrets: secretsRepo(db, schema), keyring, now },
+    demoOrg.id,
+  );
+  const hipaaFinal = await finalizeAndSign(
+    {
+      runs,
+      runResults,
+      adjudications: adjudicationsRepo(db, schema),
+      humanRatings: humanRatingsRepo(db, schema),
+      aiScores,
+      runSignoffs: runSignoffsRepo(db, schema),
+      signoffPolicies: signoffPoliciesRepo(db, schema),
+      agreementMetrics: agreementMetricsRepo(db, schema),
+      evalCertificates: evalCertificatesRepo(db, schema),
+      rubrics,
+      testCases: testCasesRepo(db, schema),
+      auditEvents: audit,
+      signer: hipaaSigner,
+      now,
+    },
+    { orgId: demoOrg.id, runId: hipaaRun.id },
+  );
+  if (hipaaFinal.finalized) {
+    console.log(`   ✓✓ HIPAA run SIGNED — cert ${hipaaFinal.certificateId?.slice(0, 12)}…`);
+  } else {
+    console.log(`   ✗ HIPAA finalize: ${hipaaFinal.reason}`);
+  }
+  console.log(`\n   🌐 Demo page: http://localhost:3000/demo`);
+  console.log(`   🔌 API:       http://localhost:3000/api/demo`);
+  // ── END HIPAA demo ────────────────────────────────────────────────────────
   await audit.append(orgId, { actorId: userId, action: "project.created", resourceType: "project", resourceId: "seed-batch", details: { count: PROJECTS.length } }, now());
 
   // 5. Summary
