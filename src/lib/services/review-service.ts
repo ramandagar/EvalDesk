@@ -28,6 +28,7 @@ import type { judgeCalibrationRepo } from "@/db/repos/judge-calibration";
 import type { agreementMetricsRepo } from "@/db/repos/agreement-metrics";
 import type { jobsRepo } from "@/db/repos/jobs";
 import type { auditService } from "@/lib/services/audit-service";
+import { estimateCost } from "@/lib/cost-tracker";
 
 export interface ReviewServiceDeps {
   guard: ReturnType<typeof guard>;
@@ -236,8 +237,13 @@ export function reviewService(deps: ReviewServiceDeps) {
       const humanBy = groupBy(humans, (h) => h.runResultId);
       const adjBy = new Map(adjs.map((a) => [a.runResultId, a]));
 
+      const model = run.modelUsed ?? "gpt-4o-mini";
       const items = results.map((r) => {
         const tc = caseById.get(r.testCaseId);
+        const cost =
+          r.tokensIn != null && r.tokensOut != null
+            ? estimateCost(model, r.tokensIn, r.tokensOut)
+            : null;
         return {
           resultId: r.id,
           title: tc?.title ?? "",
@@ -246,12 +252,22 @@ export function reviewService(deps: ReviewServiceDeps) {
           agentResponse: r.agentResponse,
           status: r.status,
           needsHuman: r.needsHuman,
+          tokensIn: r.tokensIn,
+          tokensOut: r.tokensOut,
+          cost,
           aiScores: (aiBy.get(r.id) ?? []).map((s) => ({ model: s.model, label: s.label, score: s.scoreNum, confidence: s.confidence, disagreement: s.disagreement })),
           humanRatings: (humanBy.get(r.id) ?? []).map((h) => ({ reviewerId: h.reviewerId, label: h.label, rationale: h.rationale })),
           finalLabel: adjBy.get(r.id)?.finalLabel ?? null,
         };
       });
-      return { run, results: items };
+
+      const totalTokensIn = items.reduce((s, i) => s + (i.tokensIn ?? 0), 0) || null;
+      const totalTokensOut = items.reduce((s, i) => s + (i.tokensOut ?? 0), 0) || null;
+      const totalCost = items.some((i) => i.cost != null)
+        ? items.reduce((s, i) => s + (i.cost ?? 0), 0)
+        : null;
+
+      return { run, results: items, totalTokensIn, totalTokensOut, totalCost };
     },
 
     /** Compare two runs case-by-case (final verdict, with AI label as fallback). */
