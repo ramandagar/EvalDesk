@@ -10,8 +10,9 @@ const bodySchema = z.object({
   action: z.enum(["login", "signup"]).default("login"),
 });
 
-function sessionCookie(token: string, maxAgeSec: number): string {
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+function sessionCookie(token: string, maxAgeSec: number, req: Request): string {
+  const isHttps = req.headers.get("x-forwarded-proto") === "https";
+  const secure = isHttps ? "; Secure" : "";
   return `${SESSION_COOKIE}=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAgeSec}${secure}`;
 }
 
@@ -43,7 +44,7 @@ export async function handleAuth(req: Request, c: Container): Promise<Response> 
         : await c.auth.login({ email: body.email, password: body.password, ip, userAgent });
 
     const res = json({ user: { id: result.user.id, email: result.user.email } });
-    res.headers.append("set-cookie", sessionCookie(result.token, 30 * 24 * 60 * 60));
+    res.headers.append("set-cookie", sessionCookie(result.token, 30 * 24 * 60 * 60, req));
     return res;
   } catch (e) {
     return errorResponse(e);
