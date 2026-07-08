@@ -204,6 +204,8 @@ describe("route coverage meta-test", () => {
       "results/[id]/verdicts/route.ts",
       "projects/[id]/calibration/route.ts",
       "projects/[id]/probes/route.ts",
+      "projects/[id]/benchmarks/[packId]/route.ts",
+      "benchmarks/route.ts",
       "webhooks/route.ts",
       "imports/route.ts",
       "api-keys/route.ts",
