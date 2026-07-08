@@ -18,6 +18,7 @@ export interface CreateTestCaseArgs {
   input: string;
   expectedOutput?: string | null;
   category?: string | null;
+  context?: string | null;
   order?: number;
 }
 
