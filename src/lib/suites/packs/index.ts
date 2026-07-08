@@ -4,11 +4,16 @@
 // commercial registry — never imported into src/ (open-core boundary).
 import { HIPAA_MANIFEST } from "./hipaa";
 import { EU_AI_ACT_MANIFEST } from "./eu-ai-act";
+import { MEDICAL_TRIAGE_BENCHMARK, type BenchmarkPack } from "./medical-triage";
 import type { SuiteManifest } from "../manifest";
 
 const PACKS: Record<string, SuiteManifest> = {
   hipaa: HIPAA_MANIFEST,
   "eu-ai-act": EU_AI_ACT_MANIFEST,
+};
+
+const BENCHMARKS: Record<string, BenchmarkPack> = {
+  "medical-triage-v1": MEDICAL_TRIAGE_BENCHMARK,
 };
 
 export function getSuitePack(id: string): SuiteManifest | undefined {
@@ -17,4 +22,12 @@ export function getSuitePack(id: string): SuiteManifest | undefined {
 
 export function listSuitePacks(): SuiteManifest[] {
   return Object.values(PACKS);
+}
+
+export function getBenchmarkPack(id: string): BenchmarkPack | undefined {
+  return BENCHMARKS[id];
+}
+
+export function listBenchmarkPacks(): BenchmarkPack[] {
+  return Object.values(BENCHMARKS);
 }
