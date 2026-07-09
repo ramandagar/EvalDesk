@@ -109,9 +109,13 @@ export async function finalizeAndSign(deps: FinalizeSignDeps, args: { orgId: str
   // AI-vs-human agreement metric (project scope), if computed.
   const metric = await deps.agreementMetrics.getLatest(orgId, "project", run.projectId);
 
-  // The judge model that scored this run — recorded in the cert for reproducibility.
+  // The judge model(s) that scored this run — recorded in the cert for reproducibility.
+  // With a multi-model ensemble, record ALL distinct models so the cert never lies.
   const aiForRun = await deps.aiScores.listForResults(orgId, results.map((r) => r.id));
-  const judgeModel = aiForRun[0]?.model;
+  const judgeModels = [...new Set(aiForRun.map((s) => s.model))];
+  const judgeModel = judgeModels.length === 0 ? undefined
+    : judgeModels.length === 1 ? judgeModels[0]
+    : `ensemble:${judgeModels.join(",")}`;
 
   // Build the verdict comparison from adjudications + AI consensus.
   const adjByResult = new Map(adjs.map((a) => [a.runResultId, a]));
