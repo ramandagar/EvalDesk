@@ -137,5 +137,30 @@ export async function guardedFetch(
   }
 
   const doFetch = deps.fetchImpl ?? fetch;
+
+  // Pin the validated IPs into the socket so fetch can't be DNS-rebound.
+  // Only applies to the REAL fetch (tests inject a fake that doesn't re-resolve).
+  if (!deps.fetchImpl) {
+    try {
+      const { Agent } = await import("undici");
+      const agent = new Agent({
+        connect: {
+          lookup: (_h: string, opts: { all?: boolean }, cb: (err: NodeJS.ErrnoException | null, address: string | import("node:dns").LookupAddress[], family?: number) => void) => {
+            const fam = (ip: string) => (isIP(ip) === 6 ? 6 : 4);
+            if (opts?.all) {
+              cb(null, addresses.map((a) => ({ address: a, family: fam(a) })));
+            } else {
+              cb(null, addresses[0], fam(addresses[0]));
+            }
+          },
+        },
+      });
+      // dispatcher is an undici-specific fetch option (not standard RequestInit)
+      return doFetch(raw, { ...init, dispatcher: agent } as RequestInit);
+    } catch {
+      // undici unavailable — fall through (residual rebinding risk on HTTPS)
+    }
+  }
+
   return doFetch(raw, init);
 }
