@@ -1,12 +1,12 @@
 name: "EvalDesk"
 description: "Run an EvalDesk evaluation and gate the build on pass-rate / regressions."
-author: "EvalDesk"
+author: "Raman Dagar <ramandagar479@gmail.com>"
 branding:
   icon: "check-circle"
   color: "green"
 inputs:
   base_url:
-    description: "EvalDesk API base URL (e.g. https://app.evaldesk.dev)"
+    description: "EvalDesk API base URL (e.g. https://evaldesk.dev)"
     required: true
   token:
     description: "EvalDesk session token / API key"
