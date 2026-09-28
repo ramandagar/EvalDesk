@@ -1,3 +1,4 @@
+-- EvalDesk Schema Migrations (Dual SQLite & Postgres)
 CREATE TABLE `accounts` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
