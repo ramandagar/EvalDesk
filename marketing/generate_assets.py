@@ -1,4 +1,4 @@
-"""Generate Product Hunt marketing assets for EvalDesk."""
+"""Generate high-resolution marketing and preview assets for EvalDesk."""
 
 from PIL import Image, ImageDraw, ImageFont
 import os
