@@ -1,6 +1,6 @@
 // ============================================================================
-// Test database helpers + the eachDriver harness.
-//
+// Test database helpers & dual-driver verification harness (Postgres + SQLite).
+// ============================================================================
 // SQLite always runs (tmpfile, never :memory:). Postgres runs only when
 // TEST_DATABASE_URL is set (CI / local ephemeral PG). Each Postgres test db
 // gets its OWN uniquely-named schema (with the migrator journal in that same
