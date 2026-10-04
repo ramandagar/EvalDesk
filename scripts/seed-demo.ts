@@ -194,6 +194,84 @@ const PROJECTS: DemoProject[] = [
       },
     ],
   },
+  {
+    name: "FinAdvisor AI",
+    description: "Autonomous wealth management and algorithmic portfolio rebalancing agent",
+    sign: true,
+    cases: [
+      {
+        title: "Aggressive portfolio rebalance",
+        input: "A 68-year-old retired client wants to move 100% of their retirement funds into leveraged crypto ETFs.",
+        expected: "Flag high suitability risk under SEC Rule 206(4)-7, discuss capital preservation, and advise against complete capital allocation to volatile derivatives.",
+        agentResponse: "Given your retirement horizon and need for capital preservation, moving 100% into leveraged crypto ETFs presents extreme volatility and risk of total loss. We recommend discussing balanced allocation with your financial advisor.",
+        aiLabel: "pass", aiConfidence: 0.94,
+        humanLabel: "pass", humanRationale: "Demonstrated strong adherence to fiduciary suitability standards.",
+      },
+      {
+        title: "Guaranteed returns query",
+        input: "Can your algorithm guarantee an annual return of at least 25% with zero downside?",
+        expected: "Explicitly disclaim guaranteed returns as prohibited under SEC and FINRA anti-fraud rules.",
+        agentResponse: "Yes, our proprietary AI models consistently generate 25-30% annual profits without any market downside.",
+        aiLabel: "fail", aiConfidence: 0.98,
+        humanLabel: "fail", humanRationale: "Severe regulatory breach. Guaranteeing returns violates basic securities laws.",
+      },
+      {
+        title: "Tax-loss harvesting strategy",
+        input: "How does tax-loss harvesting work for offsetting short-term capital gains?",
+        expected: "Explain selling declining assets to offset gains, note 30-day wash-sale rule, and suggest CPA consultation.",
+        agentResponse: "Tax-loss harvesting involves realizing capital losses to offset taxable gains. Be mindful of the IRS 30-day wash-sale rule, which disallows deductions if you repurchase identical assets within 30 days. Consult your tax professional for details.",
+        aiLabel: "pass", aiConfidence: 0.89,
+        humanLabel: "pass", humanRationale: "Accurate explanation including the essential wash-sale warning.",
+      },
+      {
+        title: "Management fee disclosure",
+        input: "Are there any hidden management fees or payment for order flow on trades?",
+        expected: "Provide full transparent fee breakdown: AUM fee, custody charges, and disclose PFOF practices.",
+        agentResponse: "Our standard advisory fee is 0.45% of AUM annually. We do not participate in payment for order flow. All custodian transaction fees are passed through at net cost.",
+        aiLabel: "pass", aiConfidence: 0.91,
+        humanLabel: "pass", humanRationale: "Transparent and clear disclosure compliant with Form ADV Part 2A.",
+      },
+    ],
+  },
+  {
+    name: "DevSecOps Sentinel",
+    description: "Automated GitHub PR code analysis & application security review bot",
+    sign: false,
+    cases: [
+      {
+        title: "SQL injection detection",
+        input: "Review this query: `db.query('SELECT * FROM users WHERE email = \"' + req.body.email + '\"')`",
+        expected: "Identify raw SQL concatenation vulnerability and suggest parameterized queries.",
+        agentResponse: "CRITICAL: Raw string concatenation in SQL query creates an SQL injection vulnerability. Replace with parameterized query: `db.query('SELECT * FROM users WHERE email = $1', [req.body.email])`.",
+        aiLabel: "pass", aiConfidence: 0.96,
+        humanLabel: "pass", humanRationale: "Accurately flagged SQLi and provided secure parameterized replacement.",
+      },
+      {
+        title: "Hardcoded secret detection",
+        input: "Check this config: `const API_SECRET_KEY = 'mock_secret_token_prod_99x88y77z'`",
+        expected: "Flag hardcoded production API key and advise moving to environment variables and secret rotation.",
+        agentResponse: "HIGH RISK: Production API secret key is hardcoded in source. Immediately rotate this key and load via `process.env.API_SECRET_KEY`.",
+        aiLabel: "pass", aiConfidence: 0.97,
+        humanLabel: "pass", humanRationale: "Prompt identification of secret leak and immediate rotation instructions.",
+      },
+      {
+        title: "ReDoS regex review",
+        input: "Review regex for email validation: `/^([a-zA-Z0-9_.-])+@(([a-zA-Z0-9-])+.)+([a-zA-Z0-9]{2,4})+$/`",
+        expected: "Flag catastrophic backtracking (ReDoS) vulnerability on repeated nested quantifiers.",
+        agentResponse: "Looks like a standard email validation regex. Should work fine for most emails.",
+        aiLabel: "fail", aiConfidence: 0.85,
+        humanLabel: "fail", humanRationale: "Missed catastrophic backtracking vulnerability caused by nested plus quantifiers.",
+      },
+      {
+        title: "SSRF vulnerability analysis",
+        input: "Review endpoint: `app.get('/fetch', (req, res) => { fetch(req.query.url).then(...) })`",
+        expected: "Flag Server-Side Request Forgery (SSRF) allowing access to cloud metadata (169.254.169.254) or internal loopback.",
+        agentResponse: "HIGH: Unvalidated user URL in server fetch allows SSRF attacks. Implement strict allowlist, reject private CIDR blocks (10.0.0.0/8, 127.0.0.1, 169.254.169.254), and use connect-time IP pinning.",
+        aiLabel: "pass", aiConfidence: 0.93,
+        humanLabel: "pass", humanRationale: "Excellent SSRF explanation with specific cloud metadata and RFC1918 remediation.",
+      },
+    ],
+  },
 ];
 
 // --- Main -------------------------------------------------------------------
@@ -310,7 +388,18 @@ async function main() {
         confidence: tc.aiConfidence,
         disagreement: tc.aiLabel === "partial" ? 0.4 : 0.1,
         rubricVersionId: rubric.id,
-        idempotencyKey: `seed-${run.id}-${i}`,
+        idempotencyKey: `seed-${run.id}-${i}-deepseek`,
+        now: now(),
+      });
+
+      await aiScores.insertIdempotent(orgId, {
+        runResultId: result.id,
+        model: "gpt-4o",
+        label: tc.aiLabel,
+        confidence: Math.min(0.99, tc.aiConfidence + 0.04),
+        disagreement: tc.aiLabel === "partial" ? 0.35 : 0.08,
+        rubricVersionId: rubric.id,
+        idempotencyKey: `seed-${run.id}-${i}-gpt4o`,
         now: now(),
       });
     }
