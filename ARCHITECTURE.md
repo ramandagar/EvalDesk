@@ -30,8 +30,14 @@ These principles are non-negotiable and thread through every subsystem below. Wh
 
 ```
                           ┌───────────────────────────────────────────┐
-                          │  Vercel — MARKETING ONLY (static)           │
-                          │  /  /blog  /pricing  → links to app host    │
+                          │  Cloudflare Edge Proxy (evaldesk.dev)     │
+                          │  SSL Termination + DDoS / WAF             │
+                          └─────────────────────┬─────────────────────┘
+                                                │ HTTPS
+                                                ▼
+                          ┌───────────────────────────────────────────┐
+                          │  AWS EC2 Production Deployment            │
+                          │  Next.js 15 Standalone + Postgres 16      │
                           └───────────────────────────────────────────┘
 
    CLIENTS                         API LAYER                        SERVICES                       DATA

@@ -41,8 +41,9 @@ docker compose logs -f evaldesk      # watch boot, Ctrl-C to exit
 curl http://localhost:3000/api/health  # → {"status":"ok",...}
 ```
 
-## 4. HTTPS (optional, via Cloudflare)
-Point `app.yourdomain.com` A record → EC2 public IP (proxied). Cloudflare SSL = Full. Done.
+## 4. HTTPS (via Cloudflare)
+Point `evaldesk.dev` and `www` A records → EC2 public IP (`54.166.204.22`) with Cloudflare Proxy enabled (Orange Cloud).
+Set Cloudflare SSL/TLS encryption mode to **Flexible** for HTTP origin on port 80. Zero SSL certificate maintenance required on the origin.
 
 ## Cost guardrails
 - **No NAT Gateway** (~$32/mo trap) — public subnet only.
