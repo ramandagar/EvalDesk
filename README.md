@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Docker Ready](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://github.com/ramandagar/EvalDesk/blob/main/docker-compose.yml)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![Anthropic Claude](https://img.shields.io/badge/Anthropic-Claude%20Sonnet%205.5%20%2F%20Opus%205-blueviolet?style=flat-square)](https://anthropic.com)
+[![Multi-Model](https://img.shields.io/badge/Multi--Model%20Judges-Claude%20%7C%20GPT--4o%20%7C%20DeepSeek%20%7C%20Ollama-blueviolet?style=flat-square)](https://evaldesk.dev)
 [![TypeScript SDK](https://img.shields.io/badge/TypeScript-SDK-3178C6?style=flat-square&logo=typescript)](https://github.com/ramandagar/EvalDesk)
 [![Python SDK](https://img.shields.io/badge/Python-SDK-3776AB?style=flat-square&logo=python&logoColor=white)](docs/python-sdk.md)
 
@@ -17,7 +17,7 @@
 
 ---
 
-**EvalDesk** bridges the gap between AI engineering and domain compliance. It allows domain experts (doctors, attorneys, financial analysts, risk officers) and automated multi-model LLM ensembles (powered by **Anthropic Claude Sonnet 5.5 / Claude Opus 5**, Claude 4.5 Sonnet, and GPT-4o) to rigorously evaluate, audit, and sign off on production AI agents.
+**EvalDesk** bridges the gap between AI engineering and domain compliance. It allows domain experts (doctors, attorneys, financial analysts, risk officers) and automated multi-model LLM ensembles (supporting **Anthropic Claude, OpenAI GPT-4o, DeepSeek, Google Gemini, and local Ollama models**) to rigorously evaluate, audit, and sign off on production AI agents.
 
 Every evaluation produces an **Ed25519 cryptographically signed certificate** proving test coverage and pass rates for compliance standards like **HIPAA Security Rule (45 CFR § 164.312)** and the **EU AI Act**.
 
@@ -25,7 +25,7 @@ Every evaluation produces an **Ed25519 cryptographically signed certificate** pr
 
 ## Key Features
 
-- **Multi-Model Ensemble Judge & Honest Confidence**: Combine multiple LLM judges (Claude Sonnet 5.5, Claude Opus 5, GPT-4o) with mathematical agreement metrics (Cohen's / Fleiss' Kappa) and automatic routing of ambiguous cases to human experts.
+- **Multi-Model Ensemble Judge & Honest Confidence**: Combine multiple LLM judges (Claude, GPT-4o, DeepSeek) with mathematical agreement metrics (Cohen's / Fleiss' Kappa) and automatic routing of ambiguous cases to human experts.
 - **RAG Faithfulness & Citation Verification**: Automatically verify that agent responses are grounded in provided reference documents to eliminate hallucinations.
 - **Automated Red-Teaming & Safety Probes**: Generate adversarial prompt injections, jailbreaks, and PII/PHI leakage attacks against agent endpoints on demand.
 - **Compliance Packs (HIPAA & EU AI Act)**: Pre-mapped test case categories that prove regulatory control coverage.
@@ -45,8 +45,8 @@ Every evaluation produces an **Ed25519 cryptographically signed certificate** pr
                                              │ (Flagged cases)
  ┌────────────────┐     ┌──────────────┐     ▼     ┌────────────────────────┐
  │ CI / SDK / Web ├────►│ EvalDesk API ├──────────►│ Ensemble LLM Judges    │
- └────────────────┘     └──────┬───────┘           │ Claude Sonnet 5.5/Opus5│
-                               │                   └───────────┬────────────┘
+ └────────────────┘     └──────┬───────┘           │ Claude / GPT-4o/DeepSeek
+                                │                   └───────────┬────────────┘
                                ▼                               ▼
                       ┌─────────────────┐             ┌─────────────────────┐
                       │ Postgres / SQLite│            │ Ed25519 Certificate │

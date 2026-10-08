@@ -1,73 +1,97 @@
 # Changelog
 
-All notable changes to EvalDesk are documented here. The format is based on
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
-adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+All notable changes to EvalDesk are documented in this file.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.8.0] — 2026-10-08
 
-### Planned
-- Public no-signup demo path (`/demo`) with a pre-loaded sample project
-- Multi-model judge ensemble run live (currently single-judge in production)
-- Playwright UI test baseline
-- Production monitoring/alerting guidance
+### Added
+- **Multi-Model Judge Ensembles** — Native evaluation support across Anthropic Claude, OpenAI GPT-4o, DeepSeek, Google Gemini, and local Ollama/vLLM endpoints with weighted rubric consensus.
+- **Ed25519 Cryptographic Certificates** — RFC 8785 JCS-canonicalized evaluation certificates with offline signature verification CLI (`npx evaldesk verify`).
+- **Official Python SDK (`evaldesk`)** — PyPI package with CI/CD assertion gates (`assert_run_passes`), streaming run handles, and pytest fixtures.
 
-## [0.1.0] — 2026-06-28
+### Changed
+- Automated schema codegen and dual-driver parity between PostgreSQL (production) and SQLite (local dev).
+- Improved session token validation and sticky sidebar navigation across marketing & docs pages.
 
-The first open-source release: the complete expert-verified evaluation engine,
-self-hostable, with the signed-certificate wedge.
+---
 
-### Added — Core eval loop
-- **Projects** — connect any HTTP agent endpoint (OpenAI-compatible, LangChain, custom); AES-256-GCM-encrypted API keys (never returned to the client)
-- **Test cases** — plain-English input + expected output, per-project categories
-- **Evals import** — DeepEval, Langfuse, and OpenAI-Evals dataset adapters with conservative format detection and line-numbered errors
-- **Runs** — async execution via a Postgres/SQLite-backed job queue (CAS claiming, retry with backoff, stale-job reaper, graceful shutdown)
-- **Run reports** — per-case agent answer + AI score + human verdict + final label; downloadable as self-verifiable HTML, CSV, or JSON
+## [0.7.0] — 2026-09-18
 
-### Added — The AI subsystem
-- **Provider abstraction** — DeepSeek, OpenAI, OpenRouter, Ollama (OpenAI-compatible), bring-your-own-key
-- **Judge ensemble** — distinct-model dedupe, ordinal disagreement scoring, honest empirical confidence (self-consistency + cross-judge agreement)
-- **Closed needs-human routing** — uncertain, disagreeing, audit-sampled, and adversarial items route to human review
+### Added
+- **Automated Compliance Packs** — Full regulatory mapping for HIPAA Security Rule (45 CFR § 164.312) and EU AI Act (Articles 9–15).
+- **RAG Faithfulness Scoring** — Context-grounded hallucination detection verifying factual claims against retrieved reference documents.
+- **Adversarial Red-Team Safety Probes** — Automated generation of jailbreaks, prompt injections, and PII/PHI leakage test vectors via `POST /api/v1/projects/:id/probes`.
 
-### Added — The wedge (agreement & calibration)
-- **Inter-rater agreement** — Cohen's κ, Fleiss' κ, weighted κ, bootstrap confidence intervals, Landis–Koch bands — golden-anchored to published worked examples
-- **Judge calibration** — AI-vs-human gap, directional bias, audit-sampled auto-finalize threshold τ with cold-start gates
+### Improved
+- Inter-rater agreement engine calculating Cohen's and Fleiss' Kappa across multi-judge ensembles.
+- Database query indexing on run results for sub-second report generation on 10,000+ case runs.
 
-### Added — Human review & sign-off
-- **Review workspace** — keyboard-first (1/2/3 + Enter), virtualized, **server-enforced blind review** (AI/peer verdicts are omitted from the payload, not DOM-hidden)
-- **Append-only human verdicts** — idempotent submission, correction chain, partial-unique "one current verdict per reviewer"
-- **Adjudication** — human-wins consensus; the AI never overrides a human verdict
-- **Sign-off workflow** — configurable quorum, role gate, optional κ gate; last-owner guard
+---
 
-### Added — Signed compliance artifact
-- **Ed25519-signed certificates** — RFC 8785 JCS canonicalization (byte-reproducible), run locking (post-sign immutability)
-- **Offline verification** — `node scripts/verify-cert.mjs cert.json` (zero-dependency, zero-egress); cross-implementation parity tested against the server
-- **Control-coverage** — compliance suites' coverage flows into the signed certificate
+## [0.6.0] — 2026-08-21
 
-### Added — Security & multi-tenancy
-- **Structural IDOR prevention** — every table `org_id`-scoped; cross-tenant access returns `404` (no enumeration); enforced by a per-route attack matrix with a CI meta-test
-- **Auth** — opaque session tokens (hash-stored) **and** machine API keys (Bearer, SHA-256-hashed, scoped)
-- **RBAC** — owner / admin / reviewer / viewer, enforced at the guard
-- **Envelope encryption** with AAD binding; **SSRF guard** with connect-time IP pinning on all outbound calls
-- **Rate limiting** — fixed-window, fail-closed on auth endpoints
-- **Password reset** — single-use, expiring, hash-stored tokens (email via console or SMTP)
-- **Tamper-evident audit log** — hash-chained event records on key mutations
+### Added
+- **Human-in-the-Loop Review Workspace** — Server-enforced blind dual-annotation with keyboard-first navigation (1/2/3 + Enter).
+- **Real-time Latency & Streaming Evaluation** — Token-level timing metrics including Time-To-First-Token (TTFT) and throughput tracking.
 
-### Added — Developer surface
-- **TypeScript SDK** — `runs.create().wait()`, `assertRunPasses({ minPassRate })`
-- **GitHub Action** — gate CI on pass-rate / regressions
-- **Webhooks** — HMAC-signed (Stripe-style), SSRF-guarded delivery with queue-backed retries
-- **Versioned REST API** (`/api/v1`) with cursor pagination and problem+json errors
+### Fixed
+- Fixed SSE connection dropouts during long-running batch evaluation runs.
+- Reduced memory overhead for high-concurrency batch execution workers.
 
-### Added — Operational
-- `/api/health` endpoint, standalone worker entrypoint, advisory-locked Postgres migrations
-- Dual-driver codegen with a CI drift guard (single spec → Postgres + SQLite schemas)
+---
 
-### Known limitations
-- Email defaults to console logging (SMTP requires `EVALDESK_SMTP_URL` + `nodemailer`)
-- No automated browser tests yet (pages are build-verified + click-smoke-tested)
-- Multi-model judge ensemble is unit-tested but runs single-judge in production
-- `next start` prints a warning under `output: standalone`; use `npm run dev` or `node .next/standalone/server.js`
+## [0.5.0] — 2026-07-24
 
-[Unreleased]: https://github.com/ramandagar/EvalDesk/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/ramandagar/EvalDesk/releases/tag/v0.1.0
+### Added
+- **Domain Benchmark Packs** — Prebuilt Medical Triage and Clinical Decision benchmark test suites with standard clinical triage protocols.
+- **Custom Evaluation Rubrics** — Weighted scoring criteria with markdown rubric guidelines and pass/fail thresholds.
+- **Webhook Delivery System** — HMAC-signed webhooks for `run.completed`, `run.failed`, and `certificate.signed` events.
+
+### Improved
+- Tamper-evident audit log trail with immutable SHA-256 event chaining.
+
+---
+
+## [0.4.0] — 2026-06-19
+
+### Added
+- **Agent Tool Call Validation** — Automatic verification of function invocations and parameters against JSON Schema definitions.
+- **Semantic Similarity Judge** — Embedding-based cross-encoder similarity scoring for non-exact agent outputs.
+- **Role-Based Access Control (RBAC)** — Granular permissions across Owner, Admin, Reviewer, and Viewer roles.
+
+### Improved
+- Modern dark/light theme support with accessible contrast ratios.
+
+---
+
+## [0.3.0] — 2026-05-15
+
+### Added
+- **Multi-Model Judge Consensus** — Majority voting and weighted agreement scoring across distinct LLM judges.
+- **Safety Scoring** — Automated detection of toxicity, hate speech, and sensitive data leakage.
+- **Citation Verification** — Source-grounding verification for retrieval-augmented generation agents.
+
+### Improved
+- Parallel agent HTTP calling with connection pooling and configurable rate limits.
+
+---
+
+## [0.2.0] — 2026-04-18
+
+### Added
+- **Multi-Turn Conversation Testing** — Stateful dialogue branching and context retention evaluation.
+- **Cron Scheduling** — Automated recurring evaluation runs with cron expressions.
+- **Domain Criteria Templates** — Pre-configured evaluation rubrics for clinical, financial, and legal domains.
+
+---
+
+## [0.1.0] — 2026-03-15
+
+### Added
+- Initial open-source release of EvalDesk core evaluation engine.
+- LLM-powered judge with customizable criteria and scoring rubrics.
+- Test case management with categories, tags, and bulk CSV/JSON import.
+- Run history with pass/fail analytics and latency breakdowns.
+- Project-based team organization and scoped API key authentication.

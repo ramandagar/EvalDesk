@@ -6,7 +6,7 @@ export default function ChangelogPage() {
       changes: [
         {
           type: "feature" as const,
-          text: "Anthropic Claude Sonnet 5.5 & Claude Opus 5 judge integrations with fine-grained rubric evaluation and reasoning token telemetry",
+          text: "Multi-model judge ensemble (Anthropic Claude, OpenAI GPT-4o, DeepSeek) with rubric-based evaluation and consensus scoring",
         },
         {
           type: "feature" as const,
