@@ -15,11 +15,11 @@ jobs:
         uses: ./action
         id: eval
         with:
-          evaldesk-url: ${{ secrets.EVALDESK_URL }}
-          api-key: ${{ secrets.EVALDESK_API_KEY }}
-          project-id: ${{ secrets.EVALDESK_PROJECT_ID }}
-          run-name: "CI: PR #${{ github.event.number }}"
-          fail-threshold: "80"
+          base_url: ${{ secrets.EVALDESK_URL || 'https://evaldesk.dev' }}
+          token: ${{ secrets.EVALDESK_API_KEY }}
+          org: ${{ secrets.EVALDESK_ORG_ID }}
+          project_id: ${{ secrets.EVALDESK_PROJECT_ID }}
+          min_pass_rate: "0.80"
 
       - name: Comment PR with results
         if: always()

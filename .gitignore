@@ -23,6 +23,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env*.local
 
 # vercel
@@ -43,3 +44,9 @@ docker-data/
 PROJECT_EXPLAINER.md
 promo-script.md
 promot-lanuch.md
+claude-code.md
+.commandcode/
+PYTHON_SDK_SPEC.md
+DOCS_AND_BENCHMARK_SPEC.md
+agent_eval_build_plan.html
+evaldesk-hld.html

@@ -2,28 +2,62 @@
 
 # EvalDesk
 
-**Test AI agents without writing code.**
+**Open-Source AI Agent Evaluation, Compliance Verification & Cryptographic Signing Platform**
 
-[![Open Source](https://img.shields.io/badge/open%20source-MIT-green?style=flat-square)](https://github.com/ramandagar/EvalDesk/blob/main/LICENSE)
-[![Self-Hostable](https://img.shields.io/badge/self--hostable-Docker-blue?style=flat-square)](https://github.com/ramandagar/EvalDesk/blob/main/docker-compose.yml)
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square)](https://nextjs.org/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](https://github.com/ramandagar/EvalDesk/pulls)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Docker Ready](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://github.com/ramandagar/EvalDesk/blob/main/docker-compose.yml)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![Anthropic Claude](https://img.shields.io/badge/Anthropic-Claude%203.7%20%2F%203.5-blueviolet?style=flat-square)](https://anthropic.com)
+[![TypeScript SDK](https://img.shields.io/badge/TypeScript-SDK-3178C6?style=flat-square&logo=typescript)](https://github.com/ramandagar/EvalDesk)
+[![Python SDK](https://img.shields.io/badge/Python-SDK-3776AB?style=flat-square&logo=python&logoColor=white)](docs/python-sdk.md)
 
-[Get Started](#quick-start) · [Features](#features) · [Use Cases](#use-cases) · [How It Works](#how-it-works) · [Tech Stack](#tech-stack)
+[Live Demo](https://evaldesk.dev/demo) · [Quick Start](#quick-start) · [Architecture](ARCHITECTURE.md) · [REST API](API.md) · [Python SDK](docs/python-sdk.md) · [AWS Deployment](AWS_DEPLOY.md)
 
 </div>
 
 ---
 
-Open-source evaluation tool that lets domain experts — doctors, lawyers, teachers, compliance officers — test and rate AI agent answers. No JSON. No Python scripts. No engineering required.
+**EvalDesk** bridges the gap between AI engineering and domain compliance. It allows domain experts (doctors, attorneys, financial analysts, risk officers) and automated multi-model LLM ensembles (powered by **Anthropic Claude 3.7 / 3.5**, GPT-4o, and DeepSeek) to rigorously evaluate, audit, and sign off on production AI agents.
 
-**Why EvalDesk?**
-
-Current AI evaluation tools require engineers to write code. No-code alternatives charge $500+/month and lock you in. EvalDesk is the only tool that is open source + self-hostable + no-code.
+Every evaluation produces an **Ed25519 cryptographically signed certificate** proving test coverage and pass rates for compliance standards like **HIPAA Security Rule (45 CFR § 164.312)** and the **EU AI Act**.
 
 ---
 
-## Quick Start
+## Key Features
+
+- **Multi-Model Ensemble Judge & Honest Confidence**: Combine multiple LLM judges (Claude 3.7 Sonnet, GPT-4o) with mathematical agreement metrics (Cohen's / Fleiss' Kappa) and automatic routing of ambiguous cases to human experts.
+- **RAG Faithfulness & Citation Verification**: Automatically verify that agent responses are grounded in provided reference documents to eliminate hallucinations.
+- **Automated Red-Teaming & Safety Probes**: Generate adversarial prompt injections, jailbreaks, and PII/PHI leakage attacks against agent endpoints on demand.
+- **Compliance Packs (HIPAA & EU AI Act)**: Pre-mapped test case categories that prove regulatory control coverage.
+- **Offline-Verifiable Ed25519 Certificates**: Tamper-proof digital certificates signed with public-key cryptography that auditors can verify offline.
+- **Python & TypeScript SDKs**: Trigger runs, poll status, and enforce CI/CD build failure gates (`assert_run_passes`) in automated pipelines.
+- **GitHub Action**: Native PR gate that evaluates agent PRs and comments results directly on pull requests.
+- **Self-Hostable & Privacy First**: Run locally with SQLite or scale in production with PostgreSQL and Docker.
+
+---
+
+## Architecture Overview
+
+```
+                                ┌─────────────────────────┐
+                                │  Human Domain Reviewer  │
+                                └────────────┬────────────┘
+                                             │ (Flagged cases)
+ ┌────────────────┐     ┌──────────────┐     ▼     ┌────────────────────────┐
+ │ CI / SDK / Web ├────►│ EvalDesk API ├──────────►│ Ensemble LLM Judges    │
+ └────────────────┘     └──────┬───────┘           │ Claude 3.7 / GPT-4o    │
+                               │                   └───────────┬────────────┘
+                               ▼                               ▼
+                      ┌─────────────────┐             ┌─────────────────────┐
+                      │ Postgres / SQLite│            │ Ed25519 Certificate │
+                      └─────────────────┘             └─────────────────────┘
+```
+
+---
+
+## Quick Start (Docker)
+
+Deploy the entire stack (Next.js web app + PostgreSQL + background evaluation worker) with a single command:
 
 ```bash
 git clone https://github.com/ramandagar/EvalDesk.git
@@ -31,76 +65,72 @@ cd EvalDesk
 docker compose up -d
 ```
 
-Open http://localhost:3000 — that's it. No cloud dependency. Your data stays on your server.
-
-## Features
-
-- **Plain English test cases** — Write questions and expected answers in normal text
-- **One-click agent testing** — Paste your agent URL, hit Run
-- **Human rating interface** — Pass / Fail / Partial with keyboard shortcuts (1 / 2 / 3)
-- **Quality dashboard** — Track pass rate over time, spot regressions
-- **LLM-as-Judge** — Optional auto-scoring with GPT-4 or any LLM
-- **Team collaboration** — Invite domain experts by email, no GitHub account needed
-- **Self-hostable** — One Docker command, your infrastructure, your data
-- **CI/CD integration** — GitHub Action included, fail PRs below your quality threshold
-
-## Use Cases
-
-| Who | What they test |
-|-----|---------------|
-| Doctors | Medical triage bots, diagnostic assistants |
-| Lawyers | Contract review agents, legal research tools |
-| Teachers | Educational AI tutors, grading assistants |
-| Compliance | Banking chatbots, insurance claim processors |
-| Product Managers | Customer support bots, FAQ agents |
-| QA Teams | Regression testing for AI agent updates |
-
-## How It Works
-
-```
-1. Create a project     → Name it, paste your agent's endpoint URL
-2. Write test questions → Type what you'd ask the AI in plain English
-3. Run & rate           → Each answer gets Pass/Fail/Partial with keyboard shortcuts
-4. Track quality        → See pass rate trends, catch regressions before production
-```
-
-## Tech Stack
-
-| Layer | Tech |
-|-------|------|
-| Frontend | Next.js 15, React 19, Tailwind CSS |
-| Backend | Next.js API routes, Drizzle ORM |
-| Database | SQLite (self-hosted), Postgres (cloud) |
-| Auth | NextAuth.js |
-| Deploy | Docker, docker-compose |
-| CI/CD | GitHub Actions |
-
-## Development
-
-```bash
-npm install
-cp .env.example .env.local
-npx drizzle-kit generate && npx drizzle-kit migrate
-npm run dev
-```
-
-## Comparison
-
-| Feature | EvalDesk | DeepEval | Langfuse | Confident AI |
-|---------|----------|----------|----------|--------------|
-| Open source | Yes | Yes | Yes | No |
-| Self-hostable | Yes | Partial | Yes | No |
-| No-code UI | Yes | No | Partial | Yes |
-| Price | Free | Free | Free | $500+/mo |
-
-## Contributing
-
-PRs welcome. Fork, branch, open a pull request.
-
-## License
-
-MIT — use it, fork it, modify it, self-host it. No strings attached.
+Open `http://localhost:3000` to access the dashboard.
 
 ---
 
-Built for the people who actually know if an AI answer is correct.
+## Local Development
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Copy environment template
+cp .env.example .env.local
+
+# 3. Generate database migrations
+npm run db:gen
+
+# 4. Start development server
+npm run dev
+
+# 5. Run test suite (75+ unit & integration tests)
+npm test
+```
+
+---
+
+## SDKs & Integrations
+
+### Python SDK
+```python
+from evaldesk import EvalDesk, assert_run_passes
+
+client = EvalDesk(base_url="https://evaldesk.dev", token="evaldesk_live_key", org="org_id")
+run = client.runs.create(project_id="proj_triage").wait()
+
+# Fail CI/CD if pass rate is under 85%
+assert_run_passes(run, min_pass_rate=0.85)
+```
+*See [docs/python-sdk.md](docs/python-sdk.md) for full Python documentation.*
+
+### GitHub Action
+Add an evaluation gate to your repository workflow:
+```yaml
+- name: EvalDesk Evaluation Gate
+  uses: ./action
+  with:
+    base_url: https://evaldesk.dev
+    token: ${{ secrets.EVALDESK_API_KEY }}
+    org: ${{ secrets.EVALDESK_ORG_ID }}
+    project_id: ${{ secrets.EVALDESK_PROJECT_ID }}
+    min_pass_rate: "0.85"
+```
+
+---
+
+## Security & Verification
+
+EvalDesk generates verifiable Ed25519 cryptographic certificates for finalized runs:
+
+```bash
+# Verify certificate offline
+npx evaldesk verify --cert certificate.json --key pubkey.pem
+```
+
+---
+
+## License
+
+This project is open-source under the [MIT License](LICENSE).
+Built by Raman Dagar and community contributors.

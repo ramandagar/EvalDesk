@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function PricingPage() {
   const plans = [
     {
@@ -151,13 +153,14 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <button
-                className={`mt-6 w-full ${
+              <Link
+                href={plan.cta.toLowerCase().includes("contact") ? "/contact" : "/login"}
+                className={`mt-6 w-full inline-flex justify-center items-center ${
                   plan.highlighted ? "btn-primary" : "btn-secondary"
                 }`}
               >
                 {plan.cta}
-              </button>
+              </Link>
             </div>
           ))}
         </div>

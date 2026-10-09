@@ -1,6 +1,23 @@
 {
   "name": "evaldesk",
   "version": "0.1.0",
+  "description": "Open-source AI agent evaluation, compliance verification, and cryptographic signing platform.",
+  "author": "Raman Dagar <raman@evaldesk.dev>",
+  "homepage": "https://evaldesk.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ramandagar/EvalDesk"
+  },
+  "keywords": [
+    "ai-agent",
+    "evaluation",
+    "llm-evaluation",
+    "claude",
+    "anthropic",
+    "hipaa",
+    "ai-safety",
+    "ed25519"
+  ],
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -1,22 +1,18 @@
+import Link from "next/link";
+
 export default function AboutPage() {
   const team = [
     {
-      name: "Arjun Mehta",
-      role: "Co-founder & CEO",
-      bio: "Previously built ML infrastructure at a Fortune 100 company. Passionate about making AI evaluation accessible to every team.",
+      name: "Raman Dagar",
+      role: "Founder & Lead Architect",
+      bio: "Architecting agent evaluation, automated compliance, and cryptographic verification infrastructure for mission-critical production AI systems.",
       color: "bg-[#ABC83A]",
     },
     {
-      name: "Sarah Chen",
-      role: "Co-founder & CTO",
-      bio: "Former research engineer focused on LLM evaluation benchmarks. Led the development of award-winning NLP tooling at her previous startup.",
+      name: "Community & Contributors",
+      role: "Open Source Collective",
+      bio: "Engineers, security researchers, and healthcare/fintech domain experts collaborating across safety benchmarks, OTel tracing, and compliance packs.",
       color: "bg-[#4E9363]",
-    },
-    {
-      name: "David Okafor",
-      role: "Head of Product",
-      bio: "Spent 8 years designing developer tools and platforms. Deeply focused on creating intuitive workflows for complex technical problems.",
-      color: "bg-[#9DC1BC]",
     },
   ];
 
@@ -208,12 +204,12 @@ export default function AboutPage() {
           to set up your first test suite.
         </p>
         <div className="mt-6 flex gap-3 justify-center">
-          <button className="btn-primary px-8 py-3 text-[14px]">
+          <Link href="/login" className="btn-primary px-8 py-3 text-[14px] inline-flex items-center justify-center">
             Get started free
-          </button>
-          <button className="btn-secondary px-8 py-3 text-[14px]">
+          </Link>
+          <Link href="/docs" className="btn-secondary px-8 py-3 text-[14px] inline-flex items-center justify-center">
             Read the docs
-          </button>
+          </Link>
         </div>
       </section>
     </div>

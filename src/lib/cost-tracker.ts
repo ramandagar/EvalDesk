@@ -12,7 +12,10 @@ const PRICES: Record<string, { input: number; output: number }> = {
   "gpt-4o-mini": { input: 0.00015, output: 0.0006 },
   "gpt-4-turbo": { input: 0.01, output: 0.03 },
   "deepseek-chat": { input: 0.00014, output: 0.00028 },
+  "claude-3-7-sonnet": { input: 0.003, output: 0.015 },
   "claude-3-5-sonnet": { input: 0.003, output: 0.015 },
+  "claude-3-5-haiku": { input: 0.0008, output: 0.004 },
+  "claude-3-opus": { input: 0.015, output: 0.075 },
 };
 
 const DEFAULT_PRICE = { input: 0.001, output: 0.002 };
