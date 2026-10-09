@@ -52,15 +52,35 @@ export function ProjectsList() {
     }
   }
 
+  const [loadingStarter, setLoadingStarter] = useState(false);
+
+  async function loadStarter() {
+    setLoadingStarter(true);
+    setError(null);
+    try {
+      await api.post("/projects/starter");
+      await load();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoadingStarter(false);
+    }
+  }
+
   return (
     <Page>
       <PageHeader
         title="Projects"
         subtitle="Each project is an AI agent you evaluate."
         action={
-          <Button onClick={() => setShowForm((s) => !s)}>
-            <Plus size={15} /> New project
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={loadStarter} disabled={loadingStarter}>
+              {loadingStarter ? "Loading…" : "⚡ Starter pack"}
+            </Button>
+            <Button onClick={() => setShowForm((s) => !s)}>
+              <Plus size={15} /> New project
+            </Button>
+          </div>
         }
       />
 
@@ -100,11 +120,16 @@ export function ProjectsList() {
       ) : projects.length === 0 ? (
         <EmptyState
           title="No projects yet"
-          hint="Create your first project to start evaluating an agent."
+          hint="Create your first project or load a pre-configured enterprise evaluation suite."
           action={
-            <Button onClick={() => setShowForm(true)}>
-              <Plus size={15} /> New project
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button onClick={loadStarter} disabled={loadingStarter}>
+                {loadingStarter ? "Loading suite…" : "⚡ Load Starter Benchmark"}
+              </Button>
+              <Button variant="ghost" onClick={() => setShowForm(true)}>
+                <Plus size={15} /> New project
+              </Button>
+            </div>
           }
         />
       ) : (

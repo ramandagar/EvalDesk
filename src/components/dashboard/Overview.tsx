@@ -15,20 +15,25 @@ export function Overview() {
   const [data, setData] = useState<ProjectWithRuns[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadingStarter, setLoadingStarter] = useState(false);
+
+  async function loadData() {
+    const me = await getMe();
+    setEmail(me.user.email);
+    const { projects } = await api.get<{ projects: Project[] }>("/projects");
+    const withRuns = await Promise.all(
+      projects.map(async (p) => {
+        const { runs } = await api.get<{ runs: Run[] }>(`/runs?projectId=${p.id}`);
+        return { ...p, runs };
+      }),
+    );
+    setData(withRuns);
+  }
 
   useEffect(() => {
     (async () => {
       try {
-        const me = await getMe();
-        setEmail(me.user.email);
-        const { projects } = await api.get<{ projects: Project[] }>("/projects");
-        const withRuns = await Promise.all(
-          projects.map(async (p) => {
-            const { runs } = await api.get<{ runs: Run[] }>(`/runs?projectId=${p.id}`);
-            return { ...p, runs };
-          }),
-        );
-        setData(withRuns);
+        await loadData();
       } catch (e) {
         setError((e as Error).message);
       } finally {
@@ -36,6 +41,19 @@ export function Overview() {
       }
     })();
   }, []);
+
+  async function loadStarter() {
+    setLoadingStarter(true);
+    setError(null);
+    try {
+      await api.post("/projects/starter");
+      await loadData();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoadingStarter(false);
+    }
+  }
 
   if (loading) return <Page><Spinner /></Page>;
 
@@ -51,6 +69,30 @@ export function Overview() {
       <PageHeader title="Dashboard" subtitle={email} action={<Link href="/projects"><Button><Plus size={15} /> New project</Button></Link>} />
       {error && <ErrorBanner message={error} />}
 
+      {data.length === 0 && (
+        <Card className="mb-6 p-6 border border-[#ABC83A]/30 bg-gradient-to-br from-[#ABC83A]/10 via-[#ABC83A]/5 to-transparent">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[15px] font-semibold text-[#0a0a0a] dark:text-[#f7f8f8]">⚡ Get Started in 5 Seconds</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#ABC83A]/20 text-[#5e7a00] font-mono font-medium">Starter Pack</span>
+              </div>
+              <p className="mt-1.5 text-[13px] text-[#8a8f98] max-w-xl leading-relaxed">
+                Load a pre-configured enterprise evaluation suite (MedTriage AI with HIPAA safety probes, dual-judge consensus scores, and an Ed25519 signed compliance certificate) directly into your workspace.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button onClick={loadStarter} disabled={loadingStarter}>
+                {loadingStarter ? "Loading suite…" : "⚡ Load Starter Benchmark"}
+              </Button>
+              <Link href="/demo">
+                <Button variant="ghost">Live Demo ↗</Button>
+              </Link>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="grid grid-cols-3 gap-3 mb-8">
         <Stat icon={<FolderKanban size={16} />} label="Projects" value={data.length} href="/projects" />
         <Stat icon={<Play size={16} />} label="Total runs" value={allRuns.length} />
@@ -60,7 +102,7 @@ export function Overview() {
       <h2 className="mb-3 text-[14px] font-semibold text-[#0a0a0a] dark:text-[#f7f8f8]">Recent runs</h2>
       {recent.length === 0 ? (
         <Card className="p-8 text-center text-[13px] text-[#8a8f98]">
-          No runs yet. <Link href="/projects" className="text-[#5e7a00] hover:underline">Create a project</Link> and run your first eval.
+          No runs yet. Click <button onClick={loadStarter} className="text-[#5e7a00] font-medium hover:underline inline">Load Starter Benchmark</button> or <Link href="/projects" className="text-[#5e7a00] hover:underline">create a project</Link> to start evaluating.
         </Card>
       ) : (
         <Card>
