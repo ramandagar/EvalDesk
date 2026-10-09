@@ -58,7 +58,7 @@ cp .env.example .env   # fill in encryption keys + LLM key
 docker compose up -d</code></pre>
 <p>The app starts on port 3000. Migrations run automatically on first boot. The in-process worker starts on the first request.</p>
 <h3>Requirements</h3>
-<ul><li>Docker + Docker Compose</li><li>An LLM API key (DeepSeek, OpenAI, OpenRouter, or Ollama for local)</li><li>Encryption key: <code>openssl rand -base64 32</code></li></ul>
+<ul><li>Docker + Docker Compose</li><li>An LLM API key (Anthropic Claude, OpenAI, DeepSeek, OpenRouter, or Ollama for local)</li><li>Encryption key: <code>openssl rand -base64 32</code></li></ul>
 <h3>SDKs</h3>
 <pre><code>pip install evaldesk     # Python
 npm install @evaldesk/sdk # TypeScript</code></pre>`,
@@ -80,9 +80,9 @@ npm install @evaldesk/sdk # TypeScript</code></pre>`,
   },
   "judge-config": {
     title: "AI Judge",
-    content: `<p>The AI judge scores every agent answer on a pass/fail/partial scale. Configure it per-project with any OpenAI-compatible endpoint.</p>
+    content: `<p>The AI judge scores every agent answer on a pass/fail/partial scale. Configure it per-project with any OpenAI-compatible or Anthropic endpoint.</p>
 <h3>Supported providers</h3>
-<ul><li>DeepSeek (<code>https://api.deepseek.com/v1</code>)</li><li>OpenAI (<code>https://api.openai.com/v1</code>)</li><li>OpenRouter (<code>https://openrouter.ai/api/v1</code>)</li><li>Ollama / local vLLM (any local URL)</li></ul>
+<ul><li><strong>Anthropic Claude</strong> (<code>claude-sonnet-5-5</code>, <code>claude-opus-5</code>, <code>claude-sonnet-4-5</code>)</li><li>OpenAI (<code>gpt-4o</code>, <code>gpt-4o-mini</code>)</li><li>DeepSeek (<code>deepseek-chat</code>, <code>deepseek-reasoner</code>)</li><li>OpenRouter (any open-weights or hosted model)</li><li>Ollama / vLLM (local private deployment)</li></ul>
 <h3>Honest confidence</h3><p>Confidence is computed from self-consistency sampling and cross-judge agreement — never the model's self-reported number.</p>
 <h3>Routing</h3><p>Low-confidence, disagreeing, audit-sampled, or adversarial items automatically route to human review.</p>`,
   },
@@ -184,6 +184,37 @@ assert_run_passes(run, min_pass_rate=0.9)</code></pre>`,
 <ul><li><code>GET /api/v1/runs/:id/certificate</code> — signed certificate bundle</li></ul>
 <h3>Other</h3>
 <ul><li><code>GET /api/v1/api-keys</code> / <code>POST</code> / <code>DELETE</code></li><li><code>GET /api/v1/webhooks</code> / <code>POST</code></li><li><code>GET /api/v1/members</code> / <code>POST</code> / <code>PATCH</code></li><li><code>GET /api/v1/analytics</code></li></ul>`,
+  },
+  adversarial: {
+    title: "Safety Probes (Adversarial Testing)",
+    content: `<p>Automatically generate adversarial test cases to probe your agent for vulnerabilities, prompt injections, and data leaks.</p>
+<h3>Probe types</h3>
+<ul><li><strong>jailbreak</strong> — attempts to bypass safety guardrails</li><li><strong>prompt_injection</strong> — injects hidden instructions</li><li><strong>pii_leak</strong> — attempts to extract sensitive information</li></ul>
+<h3>Usage</h3>
+<pre><code>POST /api/v1/projects/:id/probes
+{ "type": "jailbreak", "count": 5 }</code></pre>
+<p>Each probe becomes a test case with the attack input + the expected safe response. The judge scores whether your agent resisted the attack.</p>`,
+  },
+  "multi-turn": {
+    title: "Multi-Turn Evaluation",
+    content: `<p>Test complex agent workflows across multi-step dialogues and tool-call sequences.</p>
+<h3>How it works</h3>
+<p>Multi-turn evaluations submit conversational history arrays to your agent endpoint, validating state retention, topic adherence, and hallucination bounds across dialogue turns.</p>`,
+  },
+  scheduling: {
+    title: "Automated Evaluation Runs",
+    content: `<p>Schedule recurring evaluation runs using cron triggers or webhooks from your CI/CD pipelines.</p>
+<pre><code># Trigger evaluation run via API
+curl -X POST https://evaldesk.dev/api/v1/runs \\
+  -H "Authorization: Bearer $EVALDESK_TOKEN" \\
+  -H "x-org-id: $EVALDESK_ORG" \\
+  -H "Content-Type: application/json" \\
+  -d '{"projectId": "proj_prod"}'</code></pre>`,
+  },
+  slack: {
+    title: "Alerts & Notifications",
+    content: `<p>Receive instant notifications on evaluation run completions, regression alerts, and signed compliance certificates via webhooks.</p>
+<p>Configure HMAC-signed webhooks to route alerts directly to Slack, Discord, PagerDuty, or internal incident response queues.</p>`,
   },
 };
 

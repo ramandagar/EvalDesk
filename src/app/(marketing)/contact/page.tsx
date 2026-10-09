@@ -157,7 +157,7 @@ export default function ContactPage() {
               </a>
 
               <a
-                href="https://twitter.com/evaldesk"
+                href="https://x.com/ramandagar"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 group"
@@ -175,12 +175,12 @@ export default function ContactPage() {
                   <p className="text-[14px] font-medium text-[#0a0a0a] group-hover:text-[#ABC83A] transition-colors">
                     Twitter / X
                   </p>
-                  <p className="text-[13px] text-[#8a8f98]">@evaldesk</p>
+                  <p className="text-[13px] text-[#8a8f98]">@ramandagar</p>
                 </div>
               </a>
 
               <a
-                href="https://github.com/evaldesk"
+                href="https://github.com/ramandagar/EvalDesk"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 group"
@@ -198,7 +198,7 @@ export default function ContactPage() {
                   <p className="text-[14px] font-medium text-[#0a0a0a] group-hover:text-[#ABC83A] transition-colors">
                     GitHub
                   </p>
-                  <p className="text-[13px] text-[#8a8f98]">github.com/evaldesk</p>
+                  <p className="text-[13px] text-[#8a8f98]">github.com/ramandagar/EvalDesk</p>
                 </div>
               </a>
             </div>

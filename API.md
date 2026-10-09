@@ -64,8 +64,8 @@ GET /api/v1/projects
       "name": "MedTriage AI Assistant",
       "description": "Clinical triage dialogue agent with HIPAA compliance constraints",
       "agentUrl": "https://api.medtriage.internal/v1/chat",
-      "targetModel": "claude-3-7-sonnet",
-      "judgeModel": "claude-3-5-sonnet",
+      "targetModel": "claude-sonnet-5-5",
+      "judgeModel": "claude-opus-5",
       "passThreshold": 80,
       "createdAt": 1744368000000
     }
@@ -82,7 +82,7 @@ Content-Type: application/json
   "name": "Financial Advisory Bot",
   "description": "Portfolio balancing recommendations",
   "agentUrl": "https://api.fintech.internal/chat",
-  "targetModel": "claude-3-7-sonnet",
+  "targetModel": "claude-sonnet-5-5",
   "judgeModel": "gpt-4o",
   "passThreshold": 85
 }
@@ -202,7 +202,7 @@ GET /api/v1/runs/:id/certificate
     "organization": "MedTriage Health",
     "passRate": 0.96,
     "evaluatedAt": 1744369000000,
-    "judgeModels": ["claude-3-5-sonnet", "gpt-4o"],
+    "judgeModels": ["claude-sonnet-5-5", "claude-opus-5", "gpt-4o"],
     "signerPublicKey": "ed25519:a1b2c3d4...",
     "signature": "7f8e9d0a...hex"
   }

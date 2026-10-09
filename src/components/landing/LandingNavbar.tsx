@@ -10,13 +10,13 @@ export function LandingNavbar() {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5">
         <Link href="/" className="flex items-center gap-2 text-[15px] font-semibold text-[#0a0a0a]" style={{ letterSpacing: "-0.02em" }}>
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#ABC83A]">
-            <span className="text-[11px] font-bold text-[#09090b]">E</span>
+            <span className="text-[11px] font-bold text-[#09090b]" aria-hidden="true">E</span>
           </div>
           EvalDesk
         </Link>
         <div className="hidden items-center gap-7 md:flex">
           <a href="/#features" className="text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] transition" style={{ letterSpacing: "-0.01em" }}>Features</a>
-          <a href="/#pricing" className="text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] transition" style={{ letterSpacing: "-0.01em" }}>Pricing</a>
+          <Link href="/pricing" className="text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] transition" style={{ letterSpacing: "-0.01em" }}>Pricing</Link>
           <Link href="/docs" className="text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] transition" style={{ letterSpacing: "-0.01em" }}>Docs</Link>
           <Link href="/blog" className="text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] transition" style={{ letterSpacing: "-0.01em" }}>Blog</Link>
           <Link href="/changelog" className="text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] transition" style={{ letterSpacing: "-0.01em" }}>Changelog</Link>
@@ -31,7 +31,7 @@ export function LandingNavbar() {
       {open && (
         <div className="border-t border-black/[0.06] bg-white px-5 py-4 md:hidden space-y-3">
           <a href="/#features" className="block text-[13px] text-[#8a8f98]" onClick={() => setOpen(false)}>Features</a>
-          <a href="/#pricing" className="block text-[13px] text-[#8a8f98]" onClick={() => setOpen(false)}>Pricing</a>
+          <Link href="/pricing" className="block text-[13px] text-[#8a8f98]" onClick={() => setOpen(false)}>Pricing</Link>
           <Link href="/docs" className="block text-[13px] text-[#8a8f98]" onClick={() => setOpen(false)}>Docs</Link>
           <Link href="/blog" className="block text-[13px] text-[#8a8f98]" onClick={() => setOpen(false)}>Blog</Link>
           <Link href="/changelog" className="block text-[13px] text-[#8a8f98]" onClick={() => setOpen(false)}>Changelog</Link>

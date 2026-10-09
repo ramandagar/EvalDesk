@@ -136,7 +136,7 @@ export default function AboutPage() {
         <p className="text-[15px] text-[#8a8f98] leading-relaxed mt-3 text-center max-w-xl mx-auto">
           A small, focused team passionate about building reliable AI.
         </p>
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto gap-6">
           {team.map((member) => (
             <div
               key={member.name}

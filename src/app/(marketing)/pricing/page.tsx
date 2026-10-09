@@ -288,9 +288,12 @@ export default function PricingPage() {
         <p className="text-[15px] text-[#8a8f98] leading-relaxed mt-3 max-w-md mx-auto">
           Join thousands of teams evaluating their AI agents with EvalDesk.
         </p>
-        <button className="btn-primary mt-6 px-8 py-3 text-[14px]">
+        <Link
+          href="/login"
+          className="btn-primary mt-6 px-8 py-3 text-[14px] inline-flex items-center justify-center"
+        >
           Start testing free
-        </button>
+        </Link>
       </section>
     </div>
   );

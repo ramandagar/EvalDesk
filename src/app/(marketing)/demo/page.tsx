@@ -387,7 +387,7 @@ export default function DemoPage() {
           <Link
             href="/login"
             id="demo-cta-signup"
-            className="inline-block mt-6 px-8 py-3 rounded-lg text-[14px] font-semibold text-white"
+            className="inline-block mt-6 px-8 py-3 rounded-lg text-[14px] font-semibold text-[#09090b] hover:bg-[#9AB932] transition"
             style={{ background: "#ABC83A" }}
           >
             Sign up — it's free →

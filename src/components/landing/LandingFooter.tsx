@@ -44,7 +44,7 @@ export function LandingFooter() {
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 text-[15px] font-semibold text-[#0a0a0a]" style={{ letterSpacing: "-0.02em" }}>
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#ABC83A]">
-                <span className="text-[11px] font-bold text-[#09090b]">E</span>
+                <span className="text-[11px] font-bold text-[#09090b]" aria-hidden="true">E</span>
               </div>
               EvalDesk
             </Link>
