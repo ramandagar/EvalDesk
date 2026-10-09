@@ -197,43 +197,39 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
   if (!doc) notFound();
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12 flex gap-12">
+    <div className="max-w-6xl mx-auto px-6 pt-24 pb-20 flex gap-12 min-h-screen">
       <aside className="w-56 shrink-0 hidden md:block">
-        <Link href="/" className="flex items-center gap-2 mb-8">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#ABC83A]">
-            <span className="text-[12px] font-bold text-[#09090b]">E</span>
-          </div>
-          <span className="text-[15px] font-semibold">EvalDesk</span>
-        </Link>
-        {sidebarCategories.map((cat) => (
-          <div key={cat.title} className="mb-6">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[#8a8f98] mb-2">{cat.title}</h3>
-            <ul className="space-y-1">
-              {cat.items.map((item) => (
-                <li key={item.slug}>
-                  <Link
-                    href={`/docs/${item.slug}`}
-                    className={`text-[13px] block py-1 ${item.slug === slug ? "text-[#ABC83A] font-medium" : "text-[#8a8f98] hover:text-[#0a0a0a]"}`}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        <nav className="sticky top-24 space-y-6">
+          {sidebarCategories.map((cat) => (
+            <div key={cat.title}>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[#8a8f98] mb-2">{cat.title}</h3>
+              <ul className="space-y-1">
+                {cat.items.map((item) => (
+                  <li key={item.slug}>
+                    <Link
+                      href={`/docs/${item.slug}`}
+                      className={`text-[13px] block py-1.5 transition-colors ${item.slug === slug ? "text-[#ABC83A] font-semibold" : "text-[#8a8f98] hover:text-[#0a0a0a]"}`}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
       </aside>
       <main className="flex-1 min-w-0">
-        <h1 className="text-[28px] font-semibold tracking-tight mb-6">{doc.title}</h1>
+        <h1 className="text-[32px] font-semibold tracking-tight text-[#0a0a0a] mb-6">{doc.title}</h1>
         <div
           className="prose prose-sm dark:prose-invert max-w-none
               [&_h3]:text-[18px] [&_h3]:font-semibold [&_h3]:text-[#0a0a0a] [&_h3]:mt-6 [&_h3]:mb-2
               [&_p]:text-[15px] [&_p]:text-[#8a8f98] [&_p]:leading-relaxed [&_p]:mb-4
-              [&_ul]:text-[#8a8f98] [&_ul]:mb-4 [&_ul]:pl-5 [&_ul]:list-disc [&_ul]:space-y-1
+              [&_ul]:text-[#8a8f98] [&_ul]:mb-4 [&_ul]:pl-5 [&_ul]:list-disc [&_ul]:space-y-1.5
               [&_li]:text-[15px] [&_li]:leading-relaxed
               [&_a]:text-[#ABC83A] [&_a]:underline
-              [&_code]:bg-[#f5f5f5] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-[13px]
-              [&_pre]:bg-[#f5f5f5] [&_pre]:rounded-lg [&_pre]:p-4 [&_pre]:overflow-x-auto [&_pre]:mb-4 [&_pre]:text-[13px]
+              [&_code]:bg-[#f5f5f5] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-[13px] [&_code]:text-[#0a0a0a]
+              [&_pre]:bg-[#f5f5f5] [&_pre]:rounded-lg [&_pre]:p-4 [&_pre]:overflow-x-auto [&_pre]:mb-4 [&_pre]:text-[13px] [&_pre]:text-[#0a0a0a]
               [&_strong]:text-[#0a0a0a] [&_strong]:font-medium"
           dangerouslySetInnerHTML={{ __html: doc.content }}
         />
