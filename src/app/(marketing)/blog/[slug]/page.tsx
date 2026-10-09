@@ -3,7 +3,7 @@ import Link from "next/link";
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   return (
-    <div className="max-w-2xl mx-auto px-6 py-16">
+    <div className="max-w-2xl mx-auto px-6 pt-24 pb-20 min-h-screen">
       <Link href="/blog" className="text-sm text-neutral-500 hover:underline">← Blog</Link>
       <h1 className="text-3xl font-semibold mt-4 mb-6">AI-native, expert-verified</h1>
       <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed">

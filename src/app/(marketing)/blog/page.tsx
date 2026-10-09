@@ -13,7 +13,7 @@ const POSTS: { slug: string; title: string; excerpt: string; date: string }[] = 
 
 export default function BlogPage() {
   return (
-    <div className="max-w-2xl mx-auto px-6 py-16">
+    <div className="max-w-2xl mx-auto px-6 pt-24 pb-20 min-h-screen">
       <h1 className="text-3xl font-semibold mb-8">Blog</h1>
       <ul className="space-y-6">
         {POSTS.map((p) => (

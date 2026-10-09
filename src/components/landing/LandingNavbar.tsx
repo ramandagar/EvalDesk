@@ -20,7 +20,7 @@ export function LandingNavbar() {
           <Link href="/docs" className="text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] transition" style={{ letterSpacing: "-0.01em" }}>Docs</Link>
           <Link href="/blog" className="text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] transition" style={{ letterSpacing: "-0.01em" }}>Blog</Link>
           <Link href="/changelog" className="text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] transition" style={{ letterSpacing: "-0.01em" }}>Changelog</Link>
-          <a href="https://github.com" target="_blank" className="text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] transition" style={{ letterSpacing: "-0.01em" }}>GitHub</a>
+          <a href="https://github.com/ramandagar/EvalDesk" target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] transition" style={{ letterSpacing: "-0.01em" }}>GitHub</a>
         </div>
         <div className="hidden items-center gap-3 md:flex">
           <Link href="/login" className="text-[13px] text-[#8a8f98] hover:text-[#0a0a0a] transition" style={{ letterSpacing: "-0.01em" }}>Sign in</Link>

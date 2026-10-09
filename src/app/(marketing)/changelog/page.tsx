@@ -1,6 +1,58 @@
 export default function ChangelogPage() {
   const versions = [
     {
+      version: "v0.5.0",
+      date: "October 8, 2026",
+      changes: [
+        {
+          type: "feature" as const,
+          text: "Anthropic Claude 3.7 & Claude 3.5 Sonnet judge integrations with rubric-based evaluation",
+        },
+        {
+          type: "feature" as const,
+          text: "Ed25519 cryptographically signed compliance certificates with offline verification CLI",
+        },
+        {
+          type: "feature" as const,
+          text: "Official Python SDK (evaldesk) with Pytest assertion gates (assert_run_passes)",
+        },
+        {
+          type: "improvement" as const,
+          text: "Automated schema codegen and dual Postgres/SQLite database driver parity",
+        },
+        {
+          type: "fix" as const,
+          text: "Resolved session token validation edge cases and sticky layout navigation",
+        },
+      ],
+    },
+    {
+      version: "v0.4.0",
+      date: "September 24, 2026",
+      changes: [
+        {
+          type: "feature" as const,
+          text: "Automated HIPAA Security Rule (45 CFR § 164.312) & EU AI Act compliance packs",
+        },
+        {
+          type: "feature" as const,
+          text: "RAG Faithfulness scoring with context-grounding hallucination detection",
+        },
+        {
+          type: "feature" as const,
+          text: "Adversarial red-team safety probes (jailbreaks, prompt injection, PII/PHI leak)",
+        },
+        {
+          type: "improvement" as const,
+          text: "Multi-model judge ensemble with Cohen's & Fleiss' Kappa agreement metrics",
+        },
+        {
+          type: "fix" as const,
+          text: "Optimized database query indexing on run results for sub-second report generation",
+        },
+      ],
+    },
+    {
       version: "v0.3.0",
       date: "May 2, 2026",
       changes: [
