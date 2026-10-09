@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 const SESSION_COOKIE = "evaldesk_session";
 
 // Exact public paths.
-const publicPaths = new Set(["/", "/login", "/forgot", "/reset", "/pricing", "/about", "/changelog", "/contact", "/terms", "/privacy", "/blog", "/api/health", "/demo"]);
+const publicPaths = new Set(["/", "/login", "/forgot", "/reset", "/pricing", "/about", "/changelog", "/contact", "/terms", "/privacy", "/blog", "/api/health", "/demo", "/api/contact"]);
 
 // Public prefixes: marketing/docs/blog, the public certificate + embed pages,
 // the health probe, the auth endpoints, and the whole versioned API (which
