@@ -3,12 +3,12 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 const faqs = [
-  { q: "What is EvalDesk?", a: "An open-source evaluation tool for AI agents. Domain experts test and rate AI answers without writing code. Write questions in plain English, run them against your agent, and rate the responses." },
-  { q: "How is this different from DeepEval or Langfuse?", a: "DeepEval and Langfuse require Python scripts and JSON datasets — they're built for engineers. EvalDesk is built for domain experts who actually know if an AI answer is correct." },
-  { q: "Is it really free?", a: "Yes. MIT-licensed open source. Self-host it for free, forever. Your data stays on your servers." },
-  { q: "How do I self-host it?", a: "Run `docker compose up -d` and open localhost:3000. That's it. Works with SQLite out of the box." },
-  { q: "What agents can I test?", a: "Any AI agent with an HTTP endpoint. Paste the URL and optionally add an API key." },
-  { q: "What is LLM-as-Judge?", a: "An optional feature using GPT-4 to auto-rate answers before human review, saving hours of review time." },
+  { q: "What is EvalDesk?", a: "EvalDesk is an open-source evaluation and compliance infrastructure platform for AI agents. It combines automated multi-model LLM-as-a-Judge pipelines (Claude, GPT-4o, DeepSeek) with credentialed human expert verification (physicians, legal counsel, risk analysts) and cryptographically signed audit certificates." },
+  { q: "How is EvalDesk different from DeepEval, Braintrust, or Langfuse?", a: "Developer eval libraries like DeepEval and Langfuse are engineer-focused test runners. They don't provide credentialed expert review workflows, disagreement calibration (Cohen's Kappa), or Ed25519-signed audit certificates required for regulatory compliance (HIPAA, FINRA, EU AI Act). EvalDesk bridges both worlds: full Python/TS SDKs for CI/CD, plus a dedicated review workstation for non-engineering experts." },
+  { q: "Which LLM judge models are supported?", a: "Anthropic Claude Sonnet & Haiku, OpenAI GPT-4o, DeepSeek, and custom OpenAI-compatible endpoints. You can run multi-model judge ensembles to eliminate single-model bias." },
+  { q: "What are Cryptographic Audit Certificates?", a: "When an evaluation run completes and expert sign-offs are submitted, EvalDesk generates a tamper-evident audit report sealed with an asymmetric Ed25519 digital signature and public verification key for compliance auditing." },
+  { q: "How do I integrate EvalDesk with CI/CD?", a: "Use our official Python SDK (`pip install evaldesk`), TypeScript SDK (`npm install @evaldesk/sdk`), or our GitHub Action to gate pull requests using automated assertions like `assert_run_passes()`." },
+  { q: "Is EvalDesk fully self-hostable?", a: "Yes. EvalDesk is 100% open source under the MIT License. Deploy it in your own VPC with `docker compose up -d`. Zero external telemetry, keeping your proprietary agent logs strictly confidential." },
 ];
 
 export function FAQ() {

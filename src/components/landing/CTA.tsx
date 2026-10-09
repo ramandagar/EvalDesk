@@ -9,11 +9,11 @@ export function CTA() {
           <p className="mt-3 text-[15px] text-[#8a8f98] max-w-md mx-auto" style={{ letterSpacing: "-0.01em" }}>Install, deploy, and start testing your AI agents today. Free forever.</p>
           <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Link href="/login" className="btn-primary text-[14px] px-7 py-3">Start testing free</Link>
-            <a href="https://github.com" target="_blank" className="btn-secondary text-[14px] px-7 py-3">View on GitHub</a>
+            <a href="https://github.com/ramandagar/EvalDesk" target="_blank" rel="noopener noreferrer" className="btn-secondary text-[14px] px-7 py-3">View on GitHub</a>
           </div>
           <div className="mt-5 rounded-xl border border-black/[0.06] bg-white p-4 font-mono text-[12px] text-left max-w-md mx-auto">
-            <p className="text-[#8a8f98]">$ git clone https://github.com/evaldesk/evaldesk.git</p>
-            <p className="text-[#8a8f98]">$ cd evaldesk && docker compose up -d</p>
+            <p className="text-[#8a8f98]">$ git clone https://github.com/ramandagar/EvalDesk.git</p>
+            <p className="text-[#8a8f98]">$ cd EvalDesk && docker compose up -d</p>
             <p className="text-[#4E9363] mt-1">✓ Open http://localhost:3000</p>
           </div>
         </div>

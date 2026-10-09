@@ -6,8 +6,8 @@ import { Toaster } from "sonner";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "EvalDesk — Test AI Agents Without Code",
-  description: "Open-source evaluation tool for AI agents. Domain experts test and rate AI answers without writing code.",
+  title: "EvalDesk — AI-Native Evaluations. Expert-Verified.",
+  description: "Open-source evaluation and compliance infrastructure for AI agents. Automated multi-model LLM judges with credentialed domain expert verification and cryptographic audit certificates.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
