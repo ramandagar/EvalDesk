@@ -1,12 +1,12 @@
-import { MessageSquare, Play, ThumbsUp, BarChart3, Bot, Users } from "lucide-react";
+import { ShieldCheck, Play, UserCheck, BarChart3, Bot, GitPullRequest } from "lucide-react";
 
 const features = [
-  { icon: MessageSquare, title: "Plain English test cases", desc: "Write questions in normal text. Describe what a good answer looks like. No JSON, no code." },
-  { icon: Play, title: "One-click agent testing", desc: "Paste your agent's URL, hit Run. EvalDesk sends every test case and captures every response." },
-  { icon: ThumbsUp, title: "Human rating interface", desc: "Rate each answer as Pass, Fail, or Partial with keyboard shortcuts. Fly through 50 cases in 10 min." },
-  { icon: BarChart3, title: "Quality dashboard", desc: "Track pass rate over time, spot regressions, see worst-performing test cases." },
-  { icon: Bot, title: "LLM-as-Judge", desc: "Optional auto-scoring with GPT-4. Pre-rate answers so humans only check disputed cases." },
-  { icon: Users, title: "Team collaboration", desc: "Invite doctors, lawyers, PMs by email. They rate answers in their browser. No GitHub needed." },
+  { icon: Bot, title: "Multi-model ensemble judges", desc: "Evaluate responses across Claude, GPT-4o, and DeepSeek. Automatic routing of ambiguous cases to human experts." },
+  { icon: UserCheck, title: "Credentialed expert review", desc: "Doctors, attorneys, and compliance officers review flagged outputs via rubric ratings with zero coding required." },
+  { icon: BarChart3, title: "Calibration & Kappa math", desc: "First-class metrics measuring the gap between AI and human judgment with Cohen's and Fleiss' Kappa agreement." },
+  { icon: ShieldCheck, title: "Ed25519 signed certificates", desc: "Every finalized evaluation generates an immutable, cryptographically signed certificate verifiable offline." },
+  { icon: GitPullRequest, title: "Python & TS CI/CD gates", desc: "Enforce compliance failure thresholds directly in GitHub Actions with assert_run_passes." },
+  { icon: Play, title: "Single-command self-hosting", desc: "Full data residency with Postgres or SQLite behind a single docker-compose. Zero third-party telemetry." },
 ];
 
 export function OfferSection() {
@@ -14,11 +14,12 @@ export function OfferSection() {
     <section id="features" className="py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-5">
         <div className="text-center mb-12">
-          <span className="section-label">What we offer</span>
+          <span className="section-label">Core Architecture</span>
           <h2 className="mt-4 text-[30px] font-semibold tracking-tight text-[#0a0a0a] md:text-[36px]" style={{ letterSpacing: "-0.03em" }}>
-            It&apos;s not evals for your engineers.<br />It&apos;s evals for your experts.
+            The evaluation platform built on a single thesis:<br />
+            <span className="text-[#5e7a00]">AI-native, expert-verified.</span>
           </h2>
-          <p className="mt-3 text-[15px] text-[#8a8f98] max-w-lg mx-auto" style={{ letterSpacing: "-0.01em" }}>Built for domain experts first, engineers second.</p>
+          <p className="mt-3 text-[15px] text-[#8a8f98] max-w-xl mx-auto" style={{ letterSpacing: "-0.01em" }}>Automated speed for engineers. Audit-grade rigor and cryptographic signoffs for compliance.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f, i) => (
