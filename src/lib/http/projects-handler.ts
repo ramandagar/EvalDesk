@@ -140,10 +140,10 @@ export async function handleCreateProject(req: Request, c: Container): Promise<R
       try {
         const { db, schema } = getRuntime();
         const now = () => Date.now();
-        const runs = runsRepo({ db, schema, now });
-        const runResults = runResultsRepo({ db, schema, now });
-        const aiScores = aiScoresRepo({ db, schema, now });
-        const rubrics = rubricsRepo({ db, schema, now });
+        const runs = runsRepo(db, schema);
+        const runResults = runResultsRepo(db, schema);
+        const aiScores = aiScoresRepo(db, schema);
+        const rubrics = rubricsRepo(db, schema);
 
         const rubric = await rubrics.getOrCreateDefault(org.orgId, project.id, 1);
         const run = await runs.create(org.orgId, {
