@@ -46,7 +46,7 @@ export function Overview() {
     setLoadingStarter(true);
     setError(null);
     try {
-      await api.post("/projects/starter");
+      await api.post("/projects", { template: "starter" });
       await loadData();
     } catch (e) {
       setError((e as Error).message);
