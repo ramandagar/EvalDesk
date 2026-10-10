@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" rx="7" fill="#ABC83A"/>
+  <!-- Bold modern geometric 'E' using clean path vectors (no external font dependency) -->
+  <path d="M9 7.5 H23 V11.5 H13.5 V14 H21 V18 H13.5 V20.5 H23 V24.5 H9 Z" fill="#09090b"/>
+</svg>

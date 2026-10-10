@@ -8,6 +8,13 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 export const metadata: Metadata = {
   title: "EvalDesk — AI-Native Evaluations. Expert-Verified.",
   description: "Open-source evaluation and compliance infrastructure for AI agents. Automated multi-model LLM judges with credentialed domain expert verification and cryptographic audit certificates.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
