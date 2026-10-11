@@ -1,10 +1,12 @@
+import { Stethoscope, Scale, Landmark, ShieldAlert, FileText, Database } from "lucide-react";
+
 const cases = [
-  { emoji: "🏥", title: "Clinical Triage & Health AI", desc: "Physicians and clinicians benchmark symptom triage agents against HIPAA § 164.312 privacy and acute escalation rubrics.", example: '"Does this triage bot escalate suspected STEMI cardiac emergencies immediately?"' },
-  { emoji: "⚖️", title: "Legal & Regulatory Counsel", desc: "Attorneys evaluate agent contract redlining, liability indemnification, and statutory privilege constraints.", example: '"Does this agent catch uncapped liability and indemnity carve-outs in SaaS MSAs?"' },
-  { emoji: "🏦", title: "Banking & Financial Services", desc: "Compliance teams validate wealth and lending agents against SEC Reg-BI and CFPB fair-lending requirements.", example: '"Does this loan bot adhere to adverse action disclosure guidelines under FCRA?"' },
-  { emoji: "🛡️", title: "Cybersecurity & Agent Safety", desc: "Red-teamers probe tool-calling agents against indirect prompt injection, SSRF, and jailbreak attempts.", example: '"Can an adversarial input hijack tool execution or exfiltrate environment secrets?"' },
-  { emoji: "📑", title: "Insurance Underwriting", desc: "Actuaries and claims reviewers verify agent adjudication accuracy against complex policy exclusions.", example: '"Does the agent accurately distinguish pre-existing conditions from covered loss?"' },
-  { emoji: "🎓", title: "Enterprise Knowledge & RAG", desc: "Domain specialists score retrieval faithfulness, hallucination rates, and citation grounding on internal docs.", example: '"Are citations 100% faithful to source documentation without fabricated claims?"' },
+  { icon: Stethoscope, title: "Clinical Triage & Health AI", desc: "Physicians and clinicians benchmark symptom triage agents against HIPAA § 164.312 privacy and acute escalation rubrics.", example: '"Does this triage bot escalate suspected STEMI cardiac emergencies immediately?"' },
+  { icon: Scale, title: "Legal & Regulatory Counsel", desc: "Attorneys evaluate agent contract redlining, liability indemnification, and statutory privilege constraints.", example: '"Does this agent catch uncapped liability and indemnity carve-outs in SaaS MSAs?"' },
+  { icon: Landmark, title: "Banking & Financial Services", desc: "Compliance teams validate wealth and lending agents against SEC Reg-BI and CFPB fair-lending requirements.", example: '"Does this loan bot adhere to adverse action disclosure guidelines under FCRA?"' },
+  { icon: ShieldAlert, title: "Cybersecurity & Agent Safety", desc: "Red-teamers probe tool-calling agents against indirect prompt injection, SSRF, and jailbreak attempts.", example: '"Can an adversarial input hijack tool execution or exfiltrate environment secrets?"' },
+  { icon: FileText, title: "Insurance Underwriting", desc: "Actuaries and claims reviewers verify agent adjudication accuracy against complex policy exclusions.", example: '"Does the agent accurately distinguish pre-existing conditions from covered loss?"' },
+  { icon: Database, title: "Enterprise Knowledge & RAG", desc: "Domain specialists score retrieval faithfulness, hallucination rates, and citation grounding on internal docs.", example: '"Are citations 100% faithful to source documentation without fabricated claims?"' },
 ];
 
 export function UseCases() {
@@ -19,8 +21,10 @@ export function UseCases() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {cases.map((c, i) => (
             <div key={i} className="rounded-xl border border-black/[0.06] p-5 hover:border-black/[0.12] transition-all duration-200">
-              <span className="text-2xl">{c.emoji}</span>
-              <h3 className="mt-3 text-[14px] font-semibold text-[#0a0a0a]" style={{ letterSpacing: "-0.01em" }}>{c.title}</h3>
+              <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#ABC83A]/10">
+                <c.icon className="h-4 w-4 text-[#ABC83A]" />
+              </div>
+              <h3 className="mt-1 text-[14px] font-semibold text-[#0a0a0a]" style={{ letterSpacing: "-0.01em" }}>{c.title}</h3>
               <p className="mt-1 text-[13px] text-[#8a8f98] leading-relaxed">{c.desc}</p>
               <p className="mt-3 text-[12px] text-[#4E9363] italic">{c.example}</p>
             </div>
