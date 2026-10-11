@@ -1,10 +1,10 @@
 const cases = [
-  { emoji: "🏥", title: "Healthcare", desc: "Doctors validate triage bots and diagnostic assistants.", example: '"Does this bot correctly identify cardiac emergencies?"' },
-  { emoji: "⚖️", title: "Legal", desc: "Lawyers test contract review agents and legal research tools.", example: '"Does this agent identify liability clauses?"' },
-  { emoji: "🎓", title: "Education", desc: "Teachers evaluate AI tutors and grading assistants.", example: '"Does this math tutor explain correctly for 8th graders?"' },
-  { emoji: "🏦", title: "Finance", desc: "Compliance teams validate loan advisory bots.", example: '"Does this bot correctly explain loan terms?"' },
-  { emoji: "🛡️", title: "Insurance", desc: "Claims reviewers verify AI agents process claims accurately.", example: '"Does this agent categorize claim severity correctly?"' },
-  { emoji: "💬", title: "Customer Support", desc: "PMs test support bots for accuracy, tone, and helpfulness.", example: '"Does this bot handle refunds per company policy?"' },
+  { emoji: "🏥", title: "Clinical Triage & Health AI", desc: "Physicians and clinicians benchmark symptom triage agents against HIPAA § 164.312 privacy and acute escalation rubrics.", example: '"Does this triage bot escalate suspected STEMI cardiac emergencies immediately?"' },
+  { emoji: "⚖️", title: "Legal & Regulatory Counsel", desc: "Attorneys evaluate agent contract redlining, liability indemnification, and statutory privilege constraints.", example: '"Does this agent catch uncapped liability and indemnity carve-outs in SaaS MSAs?"' },
+  { emoji: "🏦", title: "Banking & Financial Services", desc: "Compliance teams validate wealth and lending agents against SEC Reg-BI and CFPB fair-lending requirements.", example: '"Does this loan bot adhere to adverse action disclosure guidelines under FCRA?"' },
+  { emoji: "🛡️", title: "Cybersecurity & Agent Safety", desc: "Red-teamers probe tool-calling agents against indirect prompt injection, SSRF, and jailbreak attempts.", example: '"Can an adversarial input hijack tool execution or exfiltrate environment secrets?"' },
+  { emoji: "📑", title: "Insurance Underwriting", desc: "Actuaries and claims reviewers verify agent adjudication accuracy against complex policy exclusions.", example: '"Does the agent accurately distinguish pre-existing conditions from covered loss?"' },
+  { emoji: "🎓", title: "Enterprise Knowledge & RAG", desc: "Domain specialists score retrieval faithfulness, hallucination rates, and citation grounding on internal docs.", example: '"Are citations 100% faithful to source documentation without fabricated claims?"' },
 ];
 
 export function UseCases() {

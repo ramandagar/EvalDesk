@@ -3,51 +3,50 @@ import Link from "next/link";
 export default function PricingPage() {
   const plans = [
     {
-      name: "Free",
+      name: "Open Source",
       price: "$0",
       period: "",
-      description: "Get started with basic evaluation capabilities.",
+      description: "MIT Licensed open-source. Full control on your own VPC.",
       features: [
-        "Up to 3 projects",
-        "50 test cases per project",
-        "1 team member",
-        "Basic LLM Judge",
-        "Standard analytics",
-        "Community support",
+        "Multi-model LLM judges (Claude, GPT-4o, DeepSeek)",
+        "Credentialed domain expert review interface",
+        "Ed25519 cryptographic signed audit certificates",
+        "Python & TypeScript SDKs with CI/CD gates",
+        "Unlimited local runs and custom rubrics",
+        "Single-command docker compose deployment",
       ],
-      cta: "Get Started Free",
+      cta: "View on GitHub",
       highlighted: false,
     },
     {
       name: "Pro",
       price: "$29",
       period: "/mo",
-      description: "For teams shipping AI agents at scale.",
+      description: "For engineering teams automating continuous agent evaluations.",
       features: [
-        "Unlimited projects",
-        "Unlimited test cases",
-        "Up to 10 team members",
-        "Advanced LLM Judge (multi-model)",
-        "Full analytics & regression detection",
-        "Slack & webhook integrations",
-        "Priority support",
+        "Everything in Open Source",
+        "Managed multi-model judge execution",
+        "Inter-annotator agreement (Cohen's & Fleiss' Kappa)",
+        "Automated GitHub Action PR gating",
+        "Slack & webhook compliance regression alerts",
+        "Team role permissions (Engineers vs Reviewers)",
+        "Priority community support",
       ],
-      cta: "Start Pro Trial",
+      cta: "Start Free Trial",
       highlighted: true,
     },
     {
       name: "Enterprise",
-      price: "$99",
-      period: "/mo",
-      description: "For organizations with advanced needs.",
+      price: "Custom",
+      period: "",
+      description: "For organizations with strict compliance & security needs.",
       features: [
-        "Unlimited everything",
-        "Unlimited team members",
-        "Custom judge criteria & templates",
-        "SSO & advanced roles",
-        "Audit log & compliance",
-        "Custom integrations",
-        "Dedicated support",
+        "Everything in Pro",
+        "Pre-built packs: HIPAA §164.312, EU AI Act, FINRA",
+        "Air-gapped VPC / On-premise deployment",
+        "Custom KMS / HSM cryptographic signing authority",
+        "Tamper-evident audit chain exports for regulators",
+        "Dedicated SLA & solutions engineering",
       ],
       cta: "Contact Sales",
       highlighted: false,
@@ -154,7 +153,15 @@ export default function PricingPage() {
                 ))}
               </ul>
               <Link
-                href={plan.cta.toLowerCase().includes("contact") ? "/contact" : "/login"}
+                href={
+                  plan.name === "Open Source"
+                    ? "https://github.com/ramandagar/EvalDesk"
+                    : plan.cta.toLowerCase().includes("contact")
+                    ? "mailto:raman@evaldesk.dev"
+                    : "/login"
+                }
+                target={plan.name === "Open Source" ? "_blank" : undefined}
+                rel={plan.name === "Open Source" ? "noopener noreferrer" : undefined}
                 className={`mt-6 w-full inline-flex justify-center items-center ${
                   plan.highlighted ? "btn-primary" : "btn-secondary"
                 }`}
